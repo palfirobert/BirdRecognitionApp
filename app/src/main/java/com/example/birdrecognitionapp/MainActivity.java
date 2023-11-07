@@ -10,9 +10,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.birdrecognitionapp.api.RetrofitAPI;
+import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.utils.Converters;
 
 import java.io.File;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -21,7 +23,6 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    private Converters converter=new Converters();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,23 +46,21 @@ public class MainActivity extends AppCompatActivity {
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
         // calling a method to create a post and passing our modal class.
-        Call<String> call = retrofitAPI.createPost(soundInBase64);
+        Call<List<SoundPredictionResponse>> call = retrofitAPI.createPost(soundInBase64);
 
         // on below line we are executing our method.
-        call.enqueue(new Callback<String>() {
+        call.enqueue(new Callback<List<SoundPredictionResponse>>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
-                // this method is called when we get response from our api.
+            public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
                 Toast.makeText(MainActivity.this, "Data added to API", Toast.LENGTH_SHORT).show();
+                List<?> responseFromAPI = response.body();
 
-                String responseFromAPI = response.body();
-
-                System.out.println(responseFromAPI);
+                System.out.println(responseFromAPI.toString());
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
-                System.out.println(t.getMessage());
+            public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
+                t.printStackTrace();
             }
         });
     }
