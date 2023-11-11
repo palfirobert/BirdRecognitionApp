@@ -5,11 +5,16 @@ package com.example.birdrecognitionapp.services;
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaRecorder;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+
+import com.example.birdrecognitionapp.activities.MainActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,37 +49,38 @@ public class RecordingService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         System.out.println("SA INTRAT");
         startRecording();
+
         return START_STICKY;
     }
 
     private void startRecording() {
-        Long timeStampLong=System.currentTimeMillis()/1000;
-        String ts=timeStampLong.toString();
 
+            Long timeStampLong = System.currentTimeMillis() / 1000;
+            String ts = timeStampLong.toString();
+            file = new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/");
+            file.mkdirs();
+            System.out.println(file.exists());
+            System.out.println(file.getPath());
+            filename = file.getPath();
+            filename += "/audio" + ts + ".mp3";
+            mediaRecorder = new MediaRecorder();
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            mediaRecorder.setOutputFile(filename);
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            mediaRecorder.setAudioChannels(1);
+            mediaRecorder.setAudioEncodingBitRate(128);
+            mediaRecorder.setAudioSamplingRate(44100);
+            try {
+                mediaRecorder.prepare();
+                mediaRecorder.start();
+                startingTimeMillis = System.currentTimeMillis();
 
-        file=new File(Environment.getExternalStorageDirectory().getPath()+"/soundrecordings/");
-        file.mkdirs();
-        System.out.println(file.exists());
-        System.out.println(file.getPath());
-        filename=file.getPath();
-        filename+="/audio"+ts+".mp3";
-        mediaRecorder=new MediaRecorder();
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mediaRecorder.setOutputFile(filename);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mediaRecorder.setAudioChannels(1);
-        mediaRecorder.setAudioEncodingBitRate(128);
-        mediaRecorder.setAudioSamplingRate(44100);
-        try{
-            mediaRecorder.prepare();
-            mediaRecorder.start();
-            startingTimeMillis=System.currentTimeMillis();
+            } catch (IOException e) {
+                e.printStackTrace();
 
-        }catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+            }
+
     }
 
     @Override

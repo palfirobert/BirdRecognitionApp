@@ -9,8 +9,11 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.PagerTabStrip;
 import androidx.viewpager.widget.ViewPager;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.Adapter;
 import android.widget.Toast;
 
@@ -104,6 +107,10 @@ public class MainActivity extends AppCompatActivity {
 
                     if (permissionToRecord && permissionToStore) {
                         Toast.makeText(getApplicationContext(), "Permissions Granted", Toast.LENGTH_LONG).show();
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
                     } else {
                         Toast.makeText(getApplicationContext(), "Permissions Denied", Toast.LENGTH_LONG).show();
                     }
