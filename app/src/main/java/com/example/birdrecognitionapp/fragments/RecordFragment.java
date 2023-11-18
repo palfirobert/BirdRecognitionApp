@@ -108,6 +108,7 @@ public class RecordFragment extends Fragment {
             timeWhenPaused = 0;
             recordingStatusText.setText("Tap the button to start recording");
             getActivity().stopService(intent);
+
         }
     }
 }

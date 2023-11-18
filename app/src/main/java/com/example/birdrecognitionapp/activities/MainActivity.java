@@ -103,9 +103,10 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0) {
                     boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean permissionToStore = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                    boolean permissionToReadStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
                    // boolean permissionToManageStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
 
-                    if (permissionToRecord && permissionToStore) {
+                    if (permissionToRecord && permissionToStore && permissionToReadStorage) {
                         Toast.makeText(getApplicationContext(), "Permissions Granted", Toast.LENGTH_LONG).show();
                         Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                         Uri uri = Uri.fromParts("package", getPackageName(), null);
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
     private void RequestPermissions() {
         // this method is used to request the
         // permission for audio recording and storage.
-        ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
     }
 
 }
