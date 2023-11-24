@@ -82,9 +82,9 @@ public class RecordingService extends Service {
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             mediaRecorder.setOutputFile(filename);
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            mediaRecorder.setAudioChannels(1);
-            mediaRecorder.setAudioEncodingBitRate(128);
-            mediaRecorder.setAudioSamplingRate(44100);
+            mediaRecorder.setAudioChannels(2);
+            mediaRecorder.setAudioEncodingBitRate(256);
+            mediaRecorder.setAudioSamplingRate(48000);
             try {
                 mediaRecorder.prepare();
                 mediaRecorder.start();
@@ -104,8 +104,7 @@ public class RecordingService extends Service {
             stopRecording();
         }
         System.out.println("S-A DAT DESTROY");
-        String mp3FilePath=Environment.getExternalStorageDirectory().getPath() + "/soundrecordings"+"/audio" + ts + ".3gp";
-        File mp3File=new File(mp3FilePath);
+        String mp3FilePath=Environment.getExternalStorageDirectory().getPath() + "/soundrecordings"+"/audio" + ts + ".mp3";
         Path path = Paths.get(mp3FilePath);
         try {
             byte[] fileContent = Files.readAllBytes(path);
