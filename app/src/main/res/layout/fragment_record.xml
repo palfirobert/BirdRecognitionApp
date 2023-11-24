@@ -22,19 +22,19 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="64dp"
         />
+
     <ProgressBar
         android:id="@+id/recordProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:progressDrawable="@drawable/record_progress_bar"
-        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27dp"
         android:indeterminate="false"
         android:max="100"
         android:progress="0"
-        android:layout_marginTop="27dp"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true"
-        />
+        android:progressDrawable="@drawable/record_progress_bar" />
     <Button
         android:id="@+id/btn_pause"
         android:layout_width="wrap_content"

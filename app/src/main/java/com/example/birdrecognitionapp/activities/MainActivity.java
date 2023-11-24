@@ -40,9 +40,9 @@ import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 public class MainActivity extends AppCompatActivity {
     @BindView(R.id.tabs)
     PagerSlidingTabStrip tabs;
-    @BindView(R.id.pager)
+    //@BindView(R.id.pager)
     ViewPager viewPager;
-    @BindView(R.id.toolbar)
+    //@BindView(R.id.toolbar)
     Toolbar toolbar;
 
     // constant for storing audio permission
@@ -52,10 +52,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        viewPager=findViewById(R.id.pager);
+        //toolbar=findViewById(R.id.toolbar);
         ButterKnife.bind(this);
         viewPager.setAdapter(new MyTabAdapter(getSupportFragmentManager()));
         tabs.setViewPager(viewPager);
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);  AICI CRAPAPAPAPAPAPAAPAPAPAPAP
         if(!CheckPermissions())
             RequestPermissions();
 

@@ -76,7 +76,7 @@ public class RecordingService extends Service {
             //System.out.println(file.exists());
             //System.out.println(file.getPath());
             filename = file.getPath();
-            filename += "/audio" + ts + ".mp3";
+            filename += "/audio" + ts + ".3gp";
             mediaRecorder = new MediaRecorder();
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
@@ -104,7 +104,7 @@ public class RecordingService extends Service {
             stopRecording();
         }
         System.out.println("S-A DAT DESTROY");
-        String mp3FilePath=Environment.getExternalStorageDirectory().getPath() + "/soundrecordings"+"/audio" + ts + ".mp3";
+        String mp3FilePath=Environment.getExternalStorageDirectory().getPath() + "/soundrecordings"+"/audio" + ts + ".3gp";
         File mp3File=new File(mp3FilePath);
         Path path = Paths.get(mp3FilePath);
         try {
