@@ -24,8 +24,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLOutput;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -76,7 +78,7 @@ public class RecordingService extends Service {
             //System.out.println(file.exists());
             //System.out.println(file.getPath());
             filename = file.getPath();
-            filename += "/audio" + ts + ".3gp";
+            filename += "/audio" + ts + ".mp3";
             mediaRecorder = new MediaRecorder();
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
@@ -148,9 +150,12 @@ public class RecordingService extends Service {
             @Override
             public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
                 Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
-                List<?> responseFromAPI = response.body();
+                List<SoundPredictionResponse> responseFromAPI = response.body();
+                for(SoundPredictionResponse sound:responseFromAPI)
+                {
+                    System.out.println(sound.toString());
+                }
 
-                System.out.println(responseFromAPI.toString());
             }
 
             @Override
@@ -159,6 +164,10 @@ public class RecordingService extends Service {
             }
         });
     }
+
+
+
+
 
 
 }

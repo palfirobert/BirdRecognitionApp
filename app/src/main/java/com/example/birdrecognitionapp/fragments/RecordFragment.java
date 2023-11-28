@@ -24,11 +24,15 @@ import androidx.fragment.app.Fragment;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.activities.MainActivity;
+import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.sql.SQLOutput;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -48,6 +52,18 @@ public class RecordFragment extends Fragment {
     @BindView(R.id.btn_pause)
     Button btnPause;
 
+    @BindView(R.id.button_1)
+    Button predictionButtonOne;
+
+    @BindView(R.id.button_2)
+    Button predictionButtonTwo;
+
+    @BindView(R.id.button_3)
+    Button predictionButtonThree;
+
+    @BindView(R.id.prediction_title)
+    TextView predictionTitle;
+
     private boolean startRecording = true;
     private boolean pauseRecording = true;
     long timeWhenPaused = 0;
@@ -55,13 +71,19 @@ public class RecordFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
+
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View recordView = inflater.inflate(R.layout.fragment_record, container, false);
         ButterKnife.bind(this, recordView);
+        this.predictionButtonOne.setVisibility(View.INVISIBLE);
+        this.predictionButtonTwo.setVisibility(View.INVISIBLE);
+        this.predictionButtonThree.setVisibility(View.INVISIBLE);
+        this.predictionTitle.setVisibility(View.INVISIBLE);
         return recordView;
     }
 
