@@ -1,12 +1,14 @@
 package com.example.birdrecognitionapp.dto;
 
+import java.util.Objects;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
-public class SoundPredictionResponse {
+public class SoundPredictionResponse implements Comparable<SoundPredictionResponse>{
     private String common_name;
     private String scientific_name;
     private Long start_time;
@@ -14,8 +16,15 @@ public class SoundPredictionResponse {
     private Double confidence;
     private String label;
 
-    public SoundPredictionResponse(String commonName, String scientificName, int startTime, int endTime, double confidence, String label) {
+    public SoundPredictionResponse(String common_name, String scientific_name, Long start_time, Long end_time, Double confidence, String label) {
+        this.common_name = common_name;
+        this.scientific_name = scientific_name;
+        this.start_time = start_time;
+        this.end_time = end_time;
+        this.confidence = confidence;
+        this.label = label;
     }
+
     public SoundPredictionResponse(){}
     public String getCommon_name() {
         return common_name;
@@ -75,5 +84,23 @@ public class SoundPredictionResponse {
                 ", confidence=" + confidence +
                 ", label='" + label + '\'' +
                 '}';
+    }
+
+    @Override
+    public int compareTo(SoundPredictionResponse o) {
+        return Double.compare(this.confidence,o.getConfidence());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SoundPredictionResponse that = (SoundPredictionResponse) o;
+        return Objects.equals(common_name, that.common_name) && Objects.equals(scientific_name, that.scientific_name) && Objects.equals(start_time, that.start_time) && Objects.equals(end_time, that.end_time) && Objects.equals(confidence, that.confidence) && Objects.equals(label, that.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(common_name, scientific_name, start_time, end_time, confidence, label);
     }
 }

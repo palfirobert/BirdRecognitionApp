@@ -1,7 +1,10 @@
 package com.example.birdrecognitionapp.fragments;
 
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,19 +23,23 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import android.os.Parcelable;
 
 import com.example.birdrecognitionapp.R;
-import com.example.birdrecognitionapp.activities.MainActivity;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.io.File;
-import java.sql.SQLOutput;
-import java.util.Arrays;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Set;
+
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -67,6 +74,48 @@ public class RecordFragment extends Fragment {
     private boolean startRecording = true;
     private boolean pauseRecording = true;
     long timeWhenPaused = 0;
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Handle the received data
+            List<?> responseList = intent.getParcelableArrayListExtra("predictionList");
+            List<SoundPredictionResponse>predictionList=new ArrayList(responseList);
+            updateUI(predictionList);
+        }
+    };
+
+    private void updateUI(List<SoundPredictionResponse> predictionList) {
+        // Create a Map with common_name as key and CoiSoundPredictionResponse as value
+        Map<String, SoundPredictionResponse> map = new HashMap<>();
+        for (SoundPredictionResponse response : predictionList) {
+            map.put(response.getCommon_name(), response);
+        }
+
+        List<SoundPredictionResponse>distinctPredictionList=new ArrayList(map.values());
+        Collections.sort(distinctPredictionList,Collections.reverseOrder());
+        // Print the map
+        System.out.println(map);
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        System.out.println(distinctPredictionList);
+
+        for (int i = 0; i < distinctPredictionList.size(); i++) {
+            switch (i) {
+                case 0:
+                    predictionButtonOne.setVisibility(View.VISIBLE);
+                    predictionButtonOne.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                    break;
+                case 1:
+                    predictionButtonTwo.setVisibility(View.VISIBLE);
+                    predictionButtonTwo.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                    break;
+                case 2:
+                    predictionButtonThree.setVisibility(View.VISIBLE);
+                    predictionButtonThree.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                    break;
+                // Handle additional cases if needed
+            }
+        }
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -91,6 +140,9 @@ public class RecordFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         btnPause.setVisibility(View.INVISIBLE);
+        // Register to receive broadcasts from the service
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(receiver,
+                new IntentFilter("send-predictions-to-record-fragment"));
     }
 
     @OnClick(R.id.btn_record)
@@ -113,6 +165,11 @@ public class RecordFragment extends Fragment {
         Intent intent = new Intent(getContext(), RecordingService.class);
 
         if (startRecording) {
+            this.predictionButtonOne.setVisibility(View.INVISIBLE);
+            this.predictionButtonTwo.setVisibility(View.INVISIBLE);
+            this.predictionButtonThree.setVisibility(View.INVISIBLE);
+            this.predictionTitle.setVisibility(View.INVISIBLE);
+
             recordButton.setImageResource(R.drawable.ic_media_stop);
             Toast.makeText(getContext(), "Recording started", Toast.LENGTH_SHORT).show();
             chronometer.setBase(SystemClock.elapsedRealtime());

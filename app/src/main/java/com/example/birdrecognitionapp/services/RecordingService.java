@@ -1,7 +1,6 @@
 package com.example.birdrecognitionapp.services;
 
 
-
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaRecorder;
@@ -9,14 +8,17 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.activities.MainActivity;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -24,8 +26,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLOutput;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,12 +49,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RecordingService extends Service {
 
     MediaRecorder mediaRecorder;
-    long startingTimeMillis=0;
-    long elapsedTimeMillis=0;
+    long startingTimeMillis = 0;
+    long elapsedTimeMillis = 0;
 
     String ts;
     File file;
     String filename;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -71,42 +77,41 @@ public class RecordingService extends Service {
 
     private void startRecording() {
 
-            Long timeStampLong = System.currentTimeMillis() / 1000;
-            ts = timeStampLong.toString();
-            file = new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/");
-            file.mkdirs();
-            //System.out.println(file.exists());
-            //System.out.println(file.getPath());
-            filename = file.getPath();
-            filename += "/audio" + ts + ".mp3";
-            mediaRecorder = new MediaRecorder();
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            mediaRecorder.setOutputFile(filename);
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            mediaRecorder.setAudioChannels(2);
-            mediaRecorder.setAudioEncodingBitRate(256);
-            mediaRecorder.setAudioSamplingRate(48000);
-            try {
-                mediaRecorder.prepare();
-                mediaRecorder.start();
-                startingTimeMillis = System.currentTimeMillis();
+        Long timeStampLong = System.currentTimeMillis() / 1000;
+        ts = timeStampLong.toString();
+        file = new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/");
+        file.mkdirs();
+        //System.out.println(file.exists());
+        //System.out.println(file.getPath());
+        filename = file.getPath();
+        filename += "/audio" + ts + ".mp3";
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mediaRecorder.setOutputFile(filename);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mediaRecorder.setAudioChannels(2);
+        mediaRecorder.setAudioEncodingBitRate(256);
+        mediaRecorder.setAudioSamplingRate(48000);
+        try {
+            mediaRecorder.prepare();
+            mediaRecorder.start();
+            startingTimeMillis = System.currentTimeMillis();
 
-            } catch (IOException e) {
-                e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
 
-            }
+        }
 
     }
 
     @Override
     public void onDestroy() {
-        if (mediaRecorder!=null)
-        {
+        if (mediaRecorder != null) {
             stopRecording();
         }
         System.out.println("S-A DAT DESTROY");
-        String mp3FilePath=Environment.getExternalStorageDirectory().getPath() + "/soundrecordings"+"/audio" + ts + ".mp3";
+        String mp3FilePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".mp3";
         Path path = Paths.get(mp3FilePath);
         try {
             byte[] fileContent = Files.readAllBytes(path);
@@ -117,13 +122,13 @@ public class RecordingService extends Service {
         }
         super.onDestroy();
     }
-    private void stopRecording()
-    {
+
+    private void stopRecording() {
         mediaRecorder.stop();
-        elapsedTimeMillis=(System.currentTimeMillis()-startingTimeMillis);
+        elapsedTimeMillis = (System.currentTimeMillis() - startingTimeMillis);
         mediaRecorder.release();
-        mediaRecorder=null;
-        Toast.makeText(getApplicationContext(), "Recording saved "+file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        mediaRecorder = null;
+        Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
 
         // maybe add to database
     }
@@ -133,7 +138,7 @@ public class RecordingService extends Service {
         // on below line we are creating a retrofit
         // builder and passing our base url
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/")
+                .baseUrl("http://palfirobert.pythonanywhere.com")
                 // as we are sending data in json format so
                 // we have to add Gson converter factory
                 .addConverterFactory(GsonConverterFactory.create())
@@ -151,11 +156,13 @@ public class RecordingService extends Service {
             public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
                 Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
                 List<SoundPredictionResponse> responseFromAPI = response.body();
-                for(SoundPredictionResponse sound:responseFromAPI)
-                {
-                    System.out.println(sound.toString());
+                assert responseFromAPI != null;
+                Collections.sort(responseFromAPI);
+                for (SoundPredictionResponse sound : responseFromAPI) {
+                    System.out.println("Coi"+sound.toString());
                 }
-
+                // Broadcast the list to the fragment
+                sendBroadcast(responseFromAPI);
             }
 
             @Override
@@ -165,9 +172,12 @@ public class RecordingService extends Service {
         });
     }
 
-
-
-
+    private void sendBroadcast(List<SoundPredictionResponse> responseList) {
+        Intent intent = new Intent("send-predictions-to-record-fragment");
+        ArrayList<Parcelable> parcelableList = new ArrayList(responseList);
+        intent.putParcelableArrayListExtra("predictionList",parcelableList);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
 
 }
