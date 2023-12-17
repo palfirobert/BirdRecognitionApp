@@ -32,11 +32,13 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -90,9 +92,9 @@ public class RecordingService extends Service {
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setOutputFile(filename);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mediaRecorder.setAudioChannels(2);
+        mediaRecorder.setAudioChannels(1);
         mediaRecorder.setAudioEncodingBitRate(256);
-        mediaRecorder.setAudioSamplingRate(48000);
+        mediaRecorder.setAudioSamplingRate(44100);
         try {
             mediaRecorder.prepare();
             mediaRecorder.start();
@@ -134,32 +136,40 @@ public class RecordingService extends Service {
     }
 
     private void postData(String soundInBase64) {
+        // Set your desired timeout in seconds
+        int timeoutInSeconds = 30;
 
-        // on below line we are creating a retrofit
-        // builder and passing our base url
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://palfirobert.pythonanywhere.com")
-                // as we are sending data in json format so
-                // we have to add Gson converter factory
-                .addConverterFactory(GsonConverterFactory.create())
-                // at last we are building our retrofit builder.
+        // Create an OkHttpClient with the desired timeout
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .build();
-        // below line is to create an instance for our retrofit api class.
+
+        // Create a Retrofit instance with the custom OkHttpClient
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)  // Set the custom OkHttpClient
+                .build();
+
+        // Create a RetrofitAPI instance
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
-        // calling a method to create a post and passing our modal class.
+        // Create a Call object for the API request
         Call<List<SoundPredictionResponse>> call = retrofitAPI.createPost(soundInBase64);
 
-        // on below line we are executing our method.
+        // Enqueue the API call
         call.enqueue(new Callback<List<SoundPredictionResponse>>() {
             @Override
             public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
+                // Handle the successful response
                 Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
                 List<SoundPredictionResponse> responseFromAPI = response.body();
                 assert responseFromAPI != null;
                 Collections.sort(responseFromAPI);
                 for (SoundPredictionResponse sound : responseFromAPI) {
-                    System.out.println("Coi"+sound.toString());
+                    System.out.println("Coi" + sound.toString());
                 }
                 // Broadcast the list to the fragment
                 sendBroadcast(responseFromAPI);
@@ -167,10 +177,12 @@ public class RecordingService extends Service {
 
             @Override
             public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
+                // Handle the failure
                 t.printStackTrace();
             }
         });
     }
+
 
     private void sendBroadcast(List<SoundPredictionResponse> responseList) {
         Intent intent = new Intent("send-predictions-to-record-fragment");
