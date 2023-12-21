@@ -74,39 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void postData(String soundInBase64) {
 
-        // on below line we are creating a retrofit
-        // builder and passing our base url
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/")
-                // as we are sending data in json format so
-                // we have to add Gson converter factory
-                .addConverterFactory(GsonConverterFactory.create())
-                // at last we are building our retrofit builder.
-                .build();
-        // below line is to create an instance for our retrofit api class.
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
-
-        // calling a method to create a post and passing our modal class.
-        Call<List<SoundPredictionResponse>> call = retrofitAPI.createPost(soundInBase64);
-
-        // on below line we are executing our method.
-        call.enqueue(new Callback<List<SoundPredictionResponse>>() {
-            @Override
-            public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
-                Toast.makeText(MainActivity.this, "Data added to API", Toast.LENGTH_SHORT).show();
-                List<?> responseFromAPI = response.body();
-
-                System.out.println(responseFromAPI.toString());
-            }
-
-            @Override
-            public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
-                t.printStackTrace();
-            }
-        });
-    }
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

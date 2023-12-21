@@ -28,6 +28,7 @@ import android.os.Parcelable;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
+import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -71,20 +72,38 @@ public class RecordFragment extends Fragment {
     @BindView(R.id.prediction_title)
     TextView predictionTitle;
 
+    LoadingDialogBar loadingDialogBar;
+
     private boolean startRecording = true;
     private boolean pauseRecording = true;
     long timeWhenPaused = 0;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Handle the received data
-            List<?> responseList = intent.getParcelableArrayListExtra("predictionList");
-            List<SoundPredictionResponse>predictionList=new ArrayList(responseList);
-            updateUI(predictionList);
+            if(intent.getAction().equals("RECORDING_STOPPED"))
+            {
+
+            }else{
+                // Handle the received data
+                List<?> responseList = intent.getParcelableArrayListExtra("predictionList");
+                List<SoundPredictionResponse>predictionList=new ArrayList(responseList);
+                updateUI(predictionList);
+            }
+
+        }
+    };
+    private BroadcastReceiver recordingStoppedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("RECORDING_STOPPED".equals(intent.getAction())) {
+                // Show dialog here
+                loadingDialogBar.showDialog("Predicting");
+            }
         }
     };
 
     private void updateUI(List<SoundPredictionResponse> predictionList) {
+        loadingDialogBar.hideDialog();
         // Create a Map with common_name as key and CoiSoundPredictionResponse as value
         Map<String, SoundPredictionResponse> map = new HashMap<>();
         for (SoundPredictionResponse response : predictionList) {
@@ -120,7 +139,7 @@ public class RecordFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        this.loadingDialogBar=new LoadingDialogBar(getContext());
     }
 
 
@@ -143,6 +162,8 @@ public class RecordFragment extends Fragment {
         // Register to receive broadcasts from the service
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(receiver,
                 new IntentFilter("send-predictions-to-record-fragment"));
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(recordingStoppedReceiver,
+                new IntentFilter("RECORDING_STOPPED"));
     }
 
     @OnClick(R.id.btn_record)
@@ -190,4 +211,5 @@ public class RecordFragment extends Fragment {
 
         }
     }
+
 }

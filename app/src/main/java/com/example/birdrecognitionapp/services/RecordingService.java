@@ -119,6 +119,11 @@ public class RecordingService extends Service {
         try {
             byte[] fileContent = Files.readAllBytes(path);
             System.out.println(Base64.getEncoder().encodeToString(fileContent));
+
+            // flag the recording activity that the recording stopped and to show la loading dialog
+            Intent intent=new Intent("RECORDING_STOPPED");
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
             postData(Base64.getEncoder().encodeToString(fileContent));
         } catch (IOException e) {
             e.printStackTrace();
