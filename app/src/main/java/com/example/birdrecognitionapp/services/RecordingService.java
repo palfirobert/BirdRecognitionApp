@@ -1,8 +1,12 @@
 package com.example.birdrecognitionapp.services;
 
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -13,6 +17,7 @@ import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.activities.MainActivity;
@@ -21,7 +26,9 @@ import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,6 +65,14 @@ public class RecordingService extends Service {
     String ts;
     File file;
     String filename;
+    private AudioRecord audioRecord;
+    private Thread recordingThread;
+    private boolean isRecording = false;
+
+    private static final int SAMPLE_RATE = 44100; // Standard CD quality.
+    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO; // Change to CHANNEL_IN_MONO if desired.
+    private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
 
     @Override
     public void onCreate() {
@@ -79,66 +94,138 @@ public class RecordingService extends Service {
     }
 
     private void startRecording() {
+        // Check if the permission is granted
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            // Set the timestamp
+            ts = Long.toString(System.currentTimeMillis() / 1000);
 
-        Long timeStampLong = System.currentTimeMillis() / 1000;
-        ts = timeStampLong.toString();
-        file = new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/");
-        file.mkdirs();
-        //System.out.println(file.exists());
-        //System.out.println(file.getPath());
-        filename = file.getPath();
-        filename += "/audio" + ts + ".mp3";
-        mediaRecorder = new MediaRecorder();
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mediaRecorder.setOutputFile(filename);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mediaRecorder.setAudioChannels(1);
-        mediaRecorder.setAudioEncodingBitRate(256);
-        mediaRecorder.setAudioSamplingRate(44100);
+            // Initialize the AudioRecord if permission is granted
+            audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize);
+            audioRecord.startRecording();
+            isRecording = true;
+            recordingThread = new Thread(new Runnable() {
+                public void run() {
+                    writeAudioDataToFile();
+                }
+            }, "AudioRecorder Thread");
+            recordingThread.start();
+        } else {
+            // Handle the case where permission is not granted
+            Toast.makeText(this, "Recording permission not granted", Toast.LENGTH_SHORT).show();
+            // Depending on your design, you may want to stop the service or ask for permission here if possible
+        }
+    }
+
+
+
+    private void writeAudioDataToFile() {
+        String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".wav";
+        FileOutputStream os = null;
+        long totalAudioLen;
+        long totalDataLen;
+        long longSampleRate = SAMPLE_RATE;
+        int channels = 2; // For CHANNEL_IN_STEREO
+        long byteRate = 16 * SAMPLE_RATE * channels / 8;
+
+        byte data[] = new byte[bufferSize];
         try {
-            mediaRecorder.prepare();
-            mediaRecorder.start();
-            startingTimeMillis = System.currentTimeMillis();
+            os = new FileOutputStream(filePath);
+            while (isRecording) {
+                int read = audioRecord.read(data, 0, bufferSize);
+                if (read != AudioRecord.ERROR_INVALID_OPERATION) {
+                    os.write(data, 0, read);
+                }
+            }
+            os.close();
+
+            totalAudioLen = new File(filePath).length() - 44; // Subtract WAV header size
+            totalDataLen = totalAudioLen + 36;
+
+            addWavHeader(filePath, totalAudioLen, totalDataLen, longSampleRate, channels, byteRate);
 
         } catch (IOException e) {
             e.printStackTrace();
-
         }
-
     }
 
-    @Override
+    private void addWavHeader(String filePath, long totalAudioLen, long totalDataLen, long longSampleRate, int channels, long byteRate) throws IOException {
+        byte[] header = new byte[44];
+
+        RandomAccessFile randomAccessFile = new RandomAccessFile(filePath, "rw");
+        randomAccessFile.seek(0);
+
+        header[0] = 'R';  // RIFF/WAVE header
+        header[1] = 'I';
+        header[2] = 'F';
+        header[3] = 'F';
+        header[4] = (byte) (totalDataLen & 0xff);
+        header[5] = (byte) ((totalDataLen >> 8) & 0xff);
+        header[6] = (byte) ((totalDataLen >> 16) & 0xff);
+        header[7] = (byte) ((totalDataLen >> 24) & 0xff);
+        header[8] = 'W';
+        header[9] = 'A';
+        header[10] = 'V';
+        header[11] = 'E';
+        header[12] = 'f';  // 'fmt ' chunk
+        header[13] = 'm';
+        header[14] = 't';
+        header[15] = ' ';
+        header[16] = 16;  // 4 bytes: size of 'fmt ' chunk
+        header[17] = 0;
+        header[18] = 0;
+        header[19] = 0;
+        header[20] = 1;  // format = 1
+        header[21] = 0;
+        header[22] = (byte) channels;
+        header[23] = 0;
+        header[24] = (byte) (longSampleRate & 0xff);
+        header[25] = (byte) ((longSampleRate >> 8) & 0xff);
+        header[26] = (byte) ((longSampleRate >> 16) & 0xff);
+        header[27] = (byte) ((longSampleRate >> 24) & 0xff);
+        header[28] = (byte) (byteRate & 0xff);
+        header[29] = (byte) ((byteRate >> 8) & 0xff);
+        header[30] = (byte) ((byteRate >> 16) & 0xff);
+        header[31] = (byte) ((byteRate >> 24) & 0xff);
+        header[32] = (byte) (2 * 16 / 8);  // block align
+        header[33] = 0;
+        header[34] = 16;  // bits per sample
+        header[35] = 0;
+        header[36] = 'd';
+        header[37] = 'a';
+        header[38] = 't';
+        header[39] = 'a';
+        header[40] = (byte) (totalAudioLen & 0xff);
+        header[41] = (byte) ((totalAudioLen >> 8) & 0xff);
+        header[42] = (byte) ((totalAudioLen >> 16) & 0xff);
+        header[43] = (byte) ((totalAudioLen >> 24) & 0xff);
+
+        randomAccessFile.write(header, 0, 44);
+        randomAccessFile.close();
+    }
+
+        @Override
     public void onDestroy() {
-        if (mediaRecorder != null) {
+        if (isRecording) {
             stopRecording();
         }
         System.out.println("S-A DAT DESTROY");
-        String mp3FilePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".mp3";
-        Path path = Paths.get(mp3FilePath);
-        try {
-            byte[] fileContent = Files.readAllBytes(path);
-            System.out.println(Base64.getEncoder().encodeToString(fileContent));
 
-            // flag the recording activity that the recording stopped and to show la loading dialog
-            Intent intent=new Intent("RECORDING_STOPPED");
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-
-            postData(Base64.getEncoder().encodeToString(fileContent));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         super.onDestroy();
     }
 
     private void stopRecording() {
-        mediaRecorder.stop();
-        elapsedTimeMillis = (System.currentTimeMillis() - startingTimeMillis);
-        mediaRecorder.release();
-        mediaRecorder = null;
-        Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        if (audioRecord != null) {
+            isRecording = false;
+            audioRecord.stop();
+            audioRecord.release();
+            audioRecord = null;
+            recordingThread = null;
+        }
 
-        // maybe add to database
+        // Notify the UI that recording has stopped
+//        Intent intent = new Intent("RECORDING_STOPPED");
+//        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        //Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
     }
 
 
