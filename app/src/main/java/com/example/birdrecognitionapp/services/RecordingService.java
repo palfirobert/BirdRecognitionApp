@@ -270,7 +270,7 @@ public class RecordingService extends Service {
                 retryCount = 0; // Reset retry count
                 Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
                 List<SoundPredictionResponse> responseFromAPI = response.body();
-                assert responseFromAPI != null;
+                //assert responseFromAPI != null;
                 Collections.sort(responseFromAPI);
                 for (SoundPredictionResponse sound : responseFromAPI) {
                     System.out.println(sound.toString());
