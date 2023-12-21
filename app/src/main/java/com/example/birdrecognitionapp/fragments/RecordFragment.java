@@ -93,27 +93,27 @@ public class RecordFragment extends Fragment {
 
         List<SoundPredictionResponse>distinctPredictionList=new ArrayList(map.values());
         Collections.sort(distinctPredictionList,Collections.reverseOrder());
-        // Print the map
-        System.out.println(map);
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        System.out.println(distinctPredictionList);
-
-        for (int i = 0; i < distinctPredictionList.size(); i++) {
-            switch (i) {
-                case 0:
-                    predictionButtonOne.setVisibility(View.VISIBLE);
-                    predictionButtonOne.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
-                    break;
-                case 1:
-                    predictionButtonTwo.setVisibility(View.VISIBLE);
-                    predictionButtonTwo.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
-                    break;
-                case 2:
-                    predictionButtonThree.setVisibility(View.VISIBLE);
-                    predictionButtonThree.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
-                    break;
-                // Handle additional cases if needed
+        if(distinctPredictionList.size()!=0)
+            for (int i = 0; i < distinctPredictionList.size(); i++) {
+                switch (i) {
+                    case 0:
+                        predictionButtonOne.setVisibility(View.VISIBLE);
+                        predictionButtonOne.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        break;
+                    case 1:
+                        predictionButtonTwo.setVisibility(View.VISIBLE);
+                        predictionButtonTwo.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        break;
+                    case 2:
+                        predictionButtonThree.setVisibility(View.VISIBLE);
+                        predictionButtonThree.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        break;
+                    // Handle additional cases if needed
+                }
             }
+        else{
+            predictionButtonOne.setVisibility(View.VISIBLE);
+            predictionButtonOne.setText("No match found :(");
         }
     }
 

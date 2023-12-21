@@ -53,7 +53,8 @@ public class RecordingService extends Service {
     MediaRecorder mediaRecorder;
     long startingTimeMillis = 0;
     long elapsedTimeMillis = 0;
-
+    private static final int MAX_RETRIES = 3; // Max number of retries
+    private int retryCount = 0; // Current retry count
     String ts;
     File file;
     String filename;
@@ -135,6 +136,7 @@ public class RecordingService extends Service {
         // maybe add to database
     }
 
+
     private void postData(String soundInBase64) {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
@@ -164,12 +166,13 @@ public class RecordingService extends Service {
             @Override
             public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
                 // Handle the successful response
+                retryCount = 0; // Reset retry count
                 Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
                 List<SoundPredictionResponse> responseFromAPI = response.body();
                 assert responseFromAPI != null;
                 Collections.sort(responseFromAPI);
                 for (SoundPredictionResponse sound : responseFromAPI) {
-                    System.out.println("Coi" + sound.toString());
+                    System.out.println(sound.toString());
                 }
                 // Broadcast the list to the fragment
                 sendBroadcast(responseFromAPI);
@@ -177,8 +180,15 @@ public class RecordingService extends Service {
 
             @Override
             public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
-                // Handle the failure
-                t.printStackTrace();
+                if (retryCount < MAX_RETRIES) {
+                    retryCount++;
+                    System.out.println("Retrying... Attempt: " + retryCount);
+                    postData(soundInBase64); // Retry the call
+                } else {
+                    // Handle the failure after exceeding retry count
+                    t.printStackTrace();
+                    retryCount = 0; // Reset retry count
+                }
             }
         });
     }
@@ -187,7 +197,7 @@ public class RecordingService extends Service {
     private void sendBroadcast(List<SoundPredictionResponse> responseList) {
         Intent intent = new Intent("send-predictions-to-record-fragment");
         ArrayList<Parcelable> parcelableList = new ArrayList(responseList);
-        intent.putParcelableArrayListExtra("predictionList",parcelableList);
+        intent.putParcelableArrayListExtra("predictionList", parcelableList);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
