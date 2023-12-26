@@ -94,11 +94,13 @@ public class RecordingService extends Service {
     }
 
     private void startRecording() {
+
         // Check if the permission is granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             // Set the timestamp
             ts = Long.toString(System.currentTimeMillis() / 1000);
-
+            file = new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/");
+            file.mkdirs();
             // Initialize the AudioRecord if permission is granted
             audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize);
             audioRecord.startRecording();
@@ -251,7 +253,7 @@ public class RecordingService extends Service {
 
         // Create a Retrofit instance with the custom OkHttpClient
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)  // Set the custom OkHttpClient
                 .build();
