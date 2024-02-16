@@ -14,22 +14,20 @@ import android.widget.Toast;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.adapters.ViewPagerAdapter;
-import com.example.birdrecognitionapp.api.RetrofitAPI;
-import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.google.android.material.tabs.TabLayout;
 
-
-import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
+
+/**
+ * So this is the first checkpoint of the app
+ * I made the logic to record sound in a WAV format, and to comunicate to a python deployed server
+ * that is making predictions
+ * The server is deployed on python anywhere and its endpoint is configured in the record service
+ * If you want to take from this checkpoint the main topic is the sound recording service that works
+ */
 public class MainActivity extends AppCompatActivity {
 
 
@@ -38,13 +36,14 @@ public class MainActivity extends AppCompatActivity {
     TabLayout tabLayout;
     ViewPager2 viewPager2;
     ViewPagerAdapter myViewPagerAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tabLayout=findViewById(R.id.tab_layout);
-        viewPager2=findViewById(R.id.view_pager);
-        myViewPagerAdapter=new ViewPagerAdapter(this);
+        tabLayout = findViewById(R.id.tab_layout);
+        viewPager2 = findViewById(R.id.view_pager);
+        myViewPagerAdapter = new ViewPagerAdapter(this);
         viewPager2.setAdapter(myViewPagerAdapter);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -69,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
                 tabLayout.getTabAt(position).select();
             }
         });
-        if(!CheckPermissions())
+        if (!CheckPermissions())
             RequestPermissions();
 
     }
@@ -84,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
                     boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean permissionToStore = grantResults[1] == PackageManager.PERMISSION_GRANTED;
                     boolean permissionToReadStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
-                   // boolean permissionToManageStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
+                    // boolean permissionToManageStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
 
                     if (permissionToRecord && permissionToStore && permissionToReadStorage) {
                         Toast.makeText(getApplicationContext(), "Permissions Granted", Toast.LENGTH_LONG).show();
@@ -111,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
     private void RequestPermissions() {
         // this method is used to request the
         // permission for audio recording and storage.
-        ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
     }
 
 }
