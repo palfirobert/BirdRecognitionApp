@@ -21,6 +21,8 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 
+
+
 /**
  * So this is the first checkpoint of the app
  * I made the logic to record sound in a WAV format, and to comunicate to a python deployed server
@@ -28,6 +30,8 @@ import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
  * The server is deployed on python anywhere and its endpoint is configured in the record service
  * If you want to take from this checkpoint the main topic is the sound recording service that works
  */
+
+
 public class MainActivity extends AppCompatActivity {
 
 
