@@ -1,6 +1,7 @@
 package com.example.birdrecognitionapp.adapters;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,10 +9,15 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.birdrecognitionapp.R;
+import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.fragments.AudioPlayerFragment;
+import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
 import java.util.ArrayList;
@@ -20,16 +26,20 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordingsAdapter.FileViewerViewHolder> {
+public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordingsAdapter.FileViewerViewHolder> implements OnDatabaseChangedListener {
 
     Context context;
     ArrayList<RecordingItem>list;
     LinearLayoutManager linearLayoutManager;
+    DbHelper dbHelper;
     public SavedRecordingsAdapter(Context context, ArrayList<RecordingItem> list, LinearLayoutManager linearLayoutManager)
     {
         this.context=context;
         this.list=list;
         this.linearLayoutManager=linearLayoutManager;
+        dbHelper=new DbHelper(context);
+
+        DbHelper.setOnDatabaseChangedListener(this);
     }
     @NonNull
     @Override
@@ -56,6 +66,12 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
         return list.size();
     }
 
+    @Override
+    public void onNewDatabaseEntryAdded(RecordingItem recordingItem) {
+        list.add(recordingItem);
+        notifyItemInserted(list.size()-1);
+    }
+
     public class FileViewerViewHolder extends RecyclerView.ViewHolder{
 
         @BindView(R.id.file_name_text)
@@ -69,6 +85,19 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
         public FileViewerViewHolder(@NonNull View itemView) {
             super(itemView);
             ButterKnife.bind(this,itemView);
+            cardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    AudioPlayerFragment audioPlayerFragment=new AudioPlayerFragment();
+                    Bundle b=new Bundle();
+                    b.putSerializable("item",list.get(getAdapterPosition()));
+                    audioPlayerFragment.setArguments(b);
+                    FragmentTransaction fragmentTransaction=((FragmentActivity)context)
+                            .getSupportFragmentManager()
+                            .beginTransaction();
+                    audioPlayerFragment.show(fragmentTransaction,"dialog_playback");
+                }
+            });
         }
     }
 }

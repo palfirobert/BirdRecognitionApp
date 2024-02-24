@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class DbHelper extends SQLiteOpenHelper {
             COLUMN_PATH + " TEXT" + COMA_SEP +
             COLUMN_LENGTH + " INTEGER" + COMA_SEP +
             COLUMN_TIME_ADDED + " INTEGER " + ")";
-
+    private static OnDatabaseChangedListener onDatabaseChangedListener;
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -51,6 +52,8 @@ public class DbHelper extends SQLiteOpenHelper {
             contentValues.put(COLUMN_LENGTH, recordingItem.getLength());
             contentValues.put(COLUMN_TIME_ADDED, recordingItem.getTime_added());
             db.insert(TABLE_NAME, null, contentValues);
+            if(onDatabaseChangedListener!=null)
+                onDatabaseChangedListener.onNewDatabaseEntryAdded(recordingItem);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,5 +81,9 @@ public class DbHelper extends SQLiteOpenHelper {
             return null;
         }
 
+    }
+    public static void setOnDatabaseChangedListener(OnDatabaseChangedListener listener)
+    {
+        onDatabaseChangedListener=listener;
     }
 }

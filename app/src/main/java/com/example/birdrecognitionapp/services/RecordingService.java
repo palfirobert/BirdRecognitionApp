@@ -80,7 +80,7 @@ public class RecordingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        dbHelper=new DbHelper(getApplicationContext());
+        dbHelper = new DbHelper(getApplicationContext());
     }
 
     @Nullable
@@ -126,7 +126,7 @@ public class RecordingService extends Service {
 
     private void writeAudioDataToFile() {
         this.filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".wav";
-        this.fileName="audio" + ts + ".wav";
+        this.fileName = "audio" + ts + ".wav";
         FileOutputStream os = null;
         long totalAudioLen;
         long totalDataLen;
@@ -223,7 +223,7 @@ public class RecordingService extends Service {
             System.out.println(Base64.getEncoder().encodeToString(fileContent));
 
             // flag the recording activity that the recording stopped and to show la loading dialog
-            Intent intent=new Intent("RECORDING_STOPPED");
+            Intent intent = new Intent("RECORDING_STOPPED");
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
             postData(Base64.getEncoder().encodeToString(fileContent));
@@ -241,11 +241,11 @@ public class RecordingService extends Service {
             audioRecord.release();
             audioRecord = null;
             recordingThread = null;
-            RecordingItem recordingItem=new RecordingItem(fileName,filePath,elapsedTimeMillis,System.currentTimeMillis());
+            RecordingItem recordingItem = new RecordingItem(fileName, filePath, elapsedTimeMillis, System.currentTimeMillis());
             dbHelper.addRecording(recordingItem);
         }
 
-       // Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        // Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
     }
 
 
@@ -262,7 +262,7 @@ public class RecordingService extends Service {
 
         // Create a Retrofit instance with the custom OkHttpClient
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)  // Set the custom OkHttpClient
                 .build();
