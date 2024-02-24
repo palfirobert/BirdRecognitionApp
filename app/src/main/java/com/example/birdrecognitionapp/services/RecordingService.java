@@ -22,7 +22,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.activities.MainActivity;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
+import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
+import com.example.birdrecognitionapp.models.RecordingItem;
 
 
 import java.io.File;
@@ -57,18 +59,19 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @NoArgsConstructor
 public class RecordingService extends Service {
 
-    MediaRecorder mediaRecorder;
+
     long startingTimeMillis = 0;
     long elapsedTimeMillis = 0;
     private static final int MAX_RETRIES = 3; // Max number of retries
     private int retryCount = 0; // Current retry count
     String ts;
     File file;
-    String filename;
+    DbHelper dbHelper;
     private AudioRecord audioRecord;
     private Thread recordingThread;
     private boolean isRecording = false;
-
+    String filePath;
+    String fileName;
     private static final int SAMPLE_RATE = 44100; // Standard CD quality.
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO; // Change to CHANNEL_IN_MONO if desired.
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
@@ -77,6 +80,7 @@ public class RecordingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        dbHelper=new DbHelper(getApplicationContext());
     }
 
     @Nullable
@@ -111,6 +115,7 @@ public class RecordingService extends Service {
                 }
             }, "AudioRecorder Thread");
             recordingThread.start();
+            startingTimeMillis = System.currentTimeMillis();
         } else {
             // Handle the case where permission is not granted
             Toast.makeText(this, "Recording permission not granted", Toast.LENGTH_SHORT).show();
@@ -120,7 +125,8 @@ public class RecordingService extends Service {
 
 
     private void writeAudioDataToFile() {
-        String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".wav";
+        this.filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".wav";
+        this.fileName="audio" + ts + ".wav";
         FileOutputStream os = null;
         long totalAudioLen;
         long totalDataLen;
@@ -229,11 +235,14 @@ public class RecordingService extends Service {
 
     private void stopRecording() {
         if (audioRecord != null) {
+            elapsedTimeMillis = (System.currentTimeMillis() - startingTimeMillis);
             isRecording = false;
             audioRecord.stop();
             audioRecord.release();
             audioRecord = null;
             recordingThread = null;
+            RecordingItem recordingItem=new RecordingItem(fileName,filePath,elapsedTimeMillis,System.currentTimeMillis());
+            dbHelper.addRecording(recordingItem);
         }
 
        // Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
@@ -253,7 +262,7 @@ public class RecordingService extends Service {
 
         // Create a Retrofit instance with the custom OkHttpClient
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)  // Set the custom OkHttpClient
                 .build();
