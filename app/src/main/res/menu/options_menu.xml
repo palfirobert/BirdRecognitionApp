@@ -1,0 +1,8 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_predict"
+        android:title="PREDICT" />
+    <item
+        android:id="@+id/menu_delete"
+        android:title="DELETE" />
+</menu>

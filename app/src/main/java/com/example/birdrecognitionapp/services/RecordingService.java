@@ -262,7 +262,7 @@ public class RecordingService extends Service {
 
         // Create a Retrofit instance with the custom OkHttpClient
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)  // Set the custom OkHttpClient
                 .build();

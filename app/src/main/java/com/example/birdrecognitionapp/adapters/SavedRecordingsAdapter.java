@@ -4,9 +4,12 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
@@ -72,19 +75,23 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
         notifyItemInserted(list.size()-1);
     }
 
-    public class FileViewerViewHolder extends RecyclerView.ViewHolder{
+    @Override
+    public void onDatabaseEntryDeleted() {
 
-        @BindView(R.id.file_name_text)
-        TextView name;
-        @BindView(R.id.file_length_text)
-        TextView length;
-        @BindView(R.id.file_time_added)
-        TextView timeAdded;
-        @BindView(R.id.card_view)
-        View cardView;
+    }
+
+    public class FileViewerViewHolder extends RecyclerView.ViewHolder {
+        // Bind views as before
+        @BindView(R.id.file_name_text) TextView name;
+        @BindView(R.id.file_length_text) TextView length;
+        @BindView(R.id.file_time_added) TextView timeAdded;
+        @BindView(R.id.card_view) View cardView;
+
         public FileViewerViewHolder(@NonNull View itemView) {
             super(itemView);
-            ButterKnife.bind(this,itemView);
+            ButterKnife.bind(this, itemView);
+
+            // Set click listener for playing the audio
             cardView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -98,6 +105,44 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
                     audioPlayerFragment.show(fragmentTransaction,"dialog_playback");
                 }
             });
+
+            // Set long click listener for showing options
+            cardView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    showOptionsPopupMenu(v);
+                    return true;
+                }
+            });
+        }
+
+        private void showOptionsPopupMenu(View view) {
+            PopupMenu popup = new PopupMenu(context, view);
+            // Inflate the menu from xml
+            popup.inflate(R.menu.options_menu);
+            // Add click listener for menu items
+            popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem menuItem) {
+                    switch (menuItem.getItemId()) {
+                        case R.id.menu_predict:
+                            // Handle predict action
+                            RecordingItem itemToPredict = list.get(getAdapterPosition());
+
+                            return true;
+                        case R.id.menu_delete:
+                            RecordingItem itemToDelete = list.get(getAdapterPosition());
+                            dbHelper.deleteRecording(itemToDelete.getPath());
+                            list.remove(getAdapterPosition());
+                            notifyItemRemoved(getAdapterPosition());
+                            Toast.makeText(context, "Deleted "+itemToDelete.getName(), Toast.LENGTH_SHORT).show();
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+            });
+            popup.show();
         }
     }
 }

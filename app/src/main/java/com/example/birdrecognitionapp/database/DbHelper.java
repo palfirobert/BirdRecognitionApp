@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class DbHelper extends SQLiteOpenHelper {
@@ -28,6 +29,7 @@ public class DbHelper extends SQLiteOpenHelper {
             COLUMN_LENGTH + " INTEGER" + COMA_SEP +
             COLUMN_TIME_ADDED + " INTEGER " + ")";
     private static OnDatabaseChangedListener onDatabaseChangedListener;
+
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -52,7 +54,7 @@ public class DbHelper extends SQLiteOpenHelper {
             contentValues.put(COLUMN_LENGTH, recordingItem.getLength());
             contentValues.put(COLUMN_TIME_ADDED, recordingItem.getTime_added());
             db.insert(TABLE_NAME, null, contentValues);
-            if(onDatabaseChangedListener!=null)
+            if (onDatabaseChangedListener != null)
                 onDatabaseChangedListener.onNewDatabaseEntryAdded(recordingItem);
             return true;
         } catch (Exception e) {
@@ -61,29 +63,43 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
-    public ArrayList<RecordingItem>getAllAudios(){
-        ArrayList<RecordingItem>list=new ArrayList<>();
-        SQLiteDatabase db=this.getReadableDatabase();
-        Cursor cursor=db.rawQuery("select * from "+TABLE_NAME,null);
-        if (cursor!=null)
-        {
-            while(cursor.moveToNext()){
-                String name=cursor.getString(1);
-                String path=cursor.getString(2);
-                int length=(int)cursor.getLong(3);
-                long timeAdded=cursor.getLong(4);
-                RecordingItem recordingItem=new RecordingItem(name,path,length,timeAdded);
+    // Method to delete a recording by its path
+    public void deleteRecording(String path) {
+        SQLiteDatabase db = getWritableDatabase();
+        // Assuming COLUMN_PATH is the unique identifier for the recording
+        int deletedRows = db.delete(TABLE_NAME, COLUMN_PATH + " = ?", new String[]{path});
+        if (deletedRows > 0) {
+            File file = new File(path);
+            if (file.exists())
+                file.delete(); // Delete the file
+            if (onDatabaseChangedListener != null) {
+                onDatabaseChangedListener.onDatabaseEntryDeleted();
+            }
+        }
+    }
+
+    public ArrayList<RecordingItem> getAllAudios() {
+        ArrayList<RecordingItem> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from " + TABLE_NAME, null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(1);
+                String path = cursor.getString(2);
+                int length = (int) cursor.getLong(3);
+                long timeAdded = cursor.getLong(4);
+                RecordingItem recordingItem = new RecordingItem(name, path, length, timeAdded);
                 list.add(recordingItem);
             }
             cursor.close();
             return list;
-        }else{
+        } else {
             return null;
         }
 
     }
-    public static void setOnDatabaseChangedListener(OnDatabaseChangedListener listener)
-    {
-        onDatabaseChangedListener=listener;
+
+    public static void setOnDatabaseChangedListener(OnDatabaseChangedListener listener) {
+        onDatabaseChangedListener = listener;
     }
 }
