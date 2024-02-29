@@ -249,7 +249,7 @@ public class RecordingService extends Service {
     }
 
 
-    private void postData(String soundInBase64) {
+    public void postData(String soundInBase64) {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
@@ -279,7 +279,7 @@ public class RecordingService extends Service {
             public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
                 // Handle the successful response
                 retryCount = 0; // Reset retry count
-                Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
                 List<SoundPredictionResponse> responseFromAPI = response.body();
                 //assert responseFromAPI != null;
                 Collections.sort(responseFromAPI);

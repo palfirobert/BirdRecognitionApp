@@ -23,17 +23,24 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.os.Parcelable;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
+import com.example.birdrecognitionapp.models.MainActivityRecordFragmentSharedModel;
+import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +80,8 @@ public class RecordFragment extends Fragment {
     TextView predictionTitle;
 
     LoadingDialogBar loadingDialogBar;
+
+    MainActivityRecordFragmentSharedModel sharedModel;
 
     private boolean startRecording = true;
     private boolean pauseRecording = true;
@@ -212,4 +221,37 @@ public class RecordFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        sharedModel = new ViewModelProvider(requireActivity()).get(MainActivityRecordFragmentSharedModel.class);
+        observePredictCommand();
+    }
+
+    private void observePredictCommand() {
+        sharedModel.getRecordingItemToPredict().observe(getViewLifecycleOwner(), this::predictRecording);
+    }
+
+    public void predictRecording(RecordingItem recordingItem) {
+        // Show loading dialog
+        loadingDialogBar.showDialog("Predicting");
+
+        // Read the file and encode it to Base64
+        String base64EncodedString = encodeFileToBase64(recordingItem.getPath());
+
+        if(base64EncodedString != null) {
+
+            new RecordingService().postData(base64EncodedString);
+        }
+    }
+
+    private String encodeFileToBase64(String filePath) {
+        try {
+            byte[] fileContent = Files.readAllBytes(Paths.get(filePath));
+            return Base64.getEncoder().encodeToString(fileContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

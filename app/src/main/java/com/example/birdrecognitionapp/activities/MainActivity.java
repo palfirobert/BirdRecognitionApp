@@ -3,6 +3,7 @@ package com.example.birdrecognitionapp.activities;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.Intent;
@@ -13,7 +14,11 @@ import android.provider.Settings;
 import android.widget.Toast;
 
 import com.example.birdrecognitionapp.R;
+import com.example.birdrecognitionapp.adapters.SavedRecordingsAdapter;
 import com.example.birdrecognitionapp.adapters.ViewPagerAdapter;
+import com.example.birdrecognitionapp.fragments.RecordFragment;
+import com.example.birdrecognitionapp.models.MainActivityRecordFragmentSharedModel;
+import com.example.birdrecognitionapp.models.RecordingItem;
 import com.google.android.material.tabs.TabLayout;
 
 import static android.Manifest.permission.RECORD_AUDIO;
@@ -28,7 +33,7 @@ import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
  * The server is deployed on python anywhere and its endpoint is configured in the record service
  * If you want to take from this checkpoint the main topic is the sound recording service that works
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SavedRecordingsAdapter.OnPredictButtonPressListener {
 
 
     // constant for storing audio permission
@@ -36,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     TabLayout tabLayout;
     ViewPager2 viewPager2;
     ViewPagerAdapter myViewPagerAdapter;
+    MainActivityRecordFragmentSharedModel sharedModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager2 = findViewById(R.id.view_pager);
         myViewPagerAdapter = new ViewPagerAdapter(this);
         viewPager2.setAdapter(myViewPagerAdapter);
+
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -68,6 +75,9 @@ public class MainActivity extends AppCompatActivity {
                 tabLayout.getTabAt(position).select();
             }
         });
+
+        sharedModel = new ViewModelProvider(this).get(MainActivityRecordFragmentSharedModel.class);
+
         if (!CheckPermissions())
             RequestPermissions();
 
@@ -113,4 +123,10 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
     }
 
+    @Override
+    public void switchToFirstTab(RecordingItem recordingItem) {
+
+        viewPager2.setCurrentItem(0);
+        sharedModel.predictRecording(recordingItem);
+    }
 }
