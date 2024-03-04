@@ -25,10 +25,14 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import android.os.Parcelable;
 
 import com.example.birdrecognitionapp.R;
+import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.database.RomanianBirdsNameDbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
+import com.example.birdrecognitionapp.enums.LANGUAGE;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.MainActivityRecordFragmentSharedModel;
 import com.example.birdrecognitionapp.models.RecordingItem;
@@ -83,20 +87,22 @@ public class RecordFragment extends Fragment {
 
     MainActivityRecordFragmentSharedModel sharedModel;
 
+    RomanianBirdsNameDbHelper dbHelper;
+
     private boolean startRecording = true;
     private boolean pauseRecording = true;
+
     long timeWhenPaused = 0;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals("RECORDING_STOPPED"))
-            {
+            if (intent.getAction().equals("RECORDING_STOPPED")) {
 
-            }else{
+            } else {
                 // Handle the received data
                 List<?> responseList = intent.getParcelableArrayListExtra("predictionList");
-                List<SoundPredictionResponse>predictionList=new ArrayList(responseList);
-                updateUI(predictionList);
+                List<SoundPredictionResponse> predictionList = new ArrayList(responseList);
+                updateUI(predictionList, LANGUAGE.RO);
             }
 
         }
@@ -111,7 +117,7 @@ public class RecordFragment extends Fragment {
         }
     };
 
-    private void updateUI(List<SoundPredictionResponse> predictionList) {
+    private void updateUI(List<SoundPredictionResponse> predictionList, LANGUAGE language) {
         loadingDialogBar.hideDialog();
         // Create a Map with common_name as key and CoiSoundPredictionResponse as value
         Map<String, SoundPredictionResponse> map = new HashMap<>();
@@ -119,14 +125,20 @@ public class RecordFragment extends Fragment {
             map.put(response.getCommon_name(), response);
         }
 
-        List<SoundPredictionResponse>distinctPredictionList=new ArrayList(map.values());
-        Collections.sort(distinctPredictionList,Collections.reverseOrder());
-        if(distinctPredictionList.size()!=0)
+        List<SoundPredictionResponse> distinctPredictionList = new ArrayList(map.values());
+
+        Collections.sort(distinctPredictionList, Collections.reverseOrder());
+
+        if(language.equals(LANGUAGE.RO))
+            distinctPredictionList.parallelStream().forEach(prediction ->
+                    prediction.setCommon_name(dbHelper.getCommonNameByLatinName(prediction.getScientific_name())));
+
+        if (distinctPredictionList.size() != 0)
             for (int i = 0; i < distinctPredictionList.size(); i++) {
                 switch (i) {
                     case 0:
                         predictionButtonOne.setVisibility(View.VISIBLE);
-                        predictionButtonOne.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        predictionButtonOne.setText(String.valueOf(dbHelper.getCommonNameByLatinName(distinctPredictionList.get(i).getScientific_name())));
                         break;
                     case 1:
                         predictionButtonTwo.setVisibility(View.VISIBLE);
@@ -139,7 +151,7 @@ public class RecordFragment extends Fragment {
                     // Handle additional cases if needed
                 }
             }
-        else{
+        else {
             predictionButtonOne.setVisibility(View.VISIBLE);
             predictionButtonOne.setText("No match found :(");
         }
@@ -148,7 +160,7 @@ public class RecordFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.loadingDialogBar=new LoadingDialogBar(getContext());
+        this.loadingDialogBar = new LoadingDialogBar(getContext());
     }
 
 
@@ -168,6 +180,7 @@ public class RecordFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         btnPause.setVisibility(View.INVISIBLE);
+        dbHelper = new RomanianBirdsNameDbHelper(getContext());
         // Register to receive broadcasts from the service
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(receiver,
                 new IntentFilter("send-predictions-to-record-fragment"));
@@ -239,7 +252,7 @@ public class RecordFragment extends Fragment {
         // Read the file and encode it to Base64
         String base64EncodedString = encodeFileToBase64(recordingItem.getPath());
 
-        if(base64EncodedString != null) {
+        if (base64EncodedString != null) {
 
             new RecordingService().postData(base64EncodedString);
         }
