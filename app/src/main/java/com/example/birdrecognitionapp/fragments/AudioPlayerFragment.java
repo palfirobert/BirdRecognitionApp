@@ -25,6 +25,7 @@ import com.example.birdrecognitionapp.models.RecordingItem;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -34,13 +35,13 @@ import butterknife.ButterKnife;
 public class AudioPlayerFragment extends DialogFragment {
 
     private RecordingItem item;
-    private Handler handler=new Handler();
+    private Handler handler = new Handler();
     private MediaPlayer mediaPlayer;
 
-    private boolean isPlaying=false;
+    private boolean isPlaying = false;
 
-    long minutes=0;
-    long seconds=0;
+    long minutes = 0;
+    long seconds = 0;
 
     @BindView(R.id.file_name_text_view)
     TextView fileNameTextView;
@@ -64,10 +65,10 @@ public class AudioPlayerFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        Dialog dialog=super.onCreateDialog(savedInstanceState);
-        AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
-        View view=getActivity().getLayoutInflater().inflate(R.layout.fragment_audio_player,null);
-        ButterKnife.bind(this,view);
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        View view = getActivity().getLayoutInflater().inflate(R.layout.fragment_audio_player, null);
+        ButterKnife.bind(this, view);
 
         setSeekBarsValues();
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -78,29 +79,67 @@ public class AudioPlayerFragment extends DialogFragment {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                isPlaying=!isPlaying;
+
+                isPlaying = !isPlaying;
             }
         });
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (mediaPlayer != null && fromUser) {
+                    mediaPlayer.seekTo(progress);
+                    long minutes = TimeUnit.MILLISECONDS.toMinutes(mediaPlayer.getCurrentPosition());
+                    long seconds = TimeUnit.MILLISECONDS.toSeconds(mediaPlayer.getCurrentPosition()) - TimeUnit.MINUTES.toSeconds(minutes);
+                    fileCurrentProgress.setText(String.format("%02d:%02d", minutes, seconds));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // Intentionally empty
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (mediaPlayer != null) {
+                    mediaPlayer.seekTo(seekBar.getProgress());
+                }
+            }
+        });
+
         fileNameTextView.setText(item.getName());
-        fileLengthTextView.setText(String.format("%02d:%02d",minutes,seconds));
+        fileLengthTextView.setText(String.format("%02d:%02d", minutes, seconds));
         builder.setView(view);
         dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         return builder.create();
 
     }
 
-    private void onPlay(boolean isPlaying) throws IOException {
-        if(!isPlaying)
-        {
-            if(mediaPlayer==null)
-            {
-                startPlaying();
-            }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        try{
+            stopPlaying();
+        }catch (Exception e){
+
         }
-        else{
+
+    }
+
+    private void onPlay(boolean isPlaying) throws IOException {
+        if (!isPlaying) {
+            if (mediaPlayer == null) {
+                startPlaying();
+            }else
+            {
+                resumePlaying();
+            }
+        } else {
             pausePlaying();
         }
     }
+
 
     private void pausePlaying() {
         floatingActionButton.setImageResource(R.drawable.ic_media_play);
@@ -108,22 +147,40 @@ public class AudioPlayerFragment extends DialogFragment {
         mediaPlayer.pause();
     }
 
+    private void resumePlaying() {
+        if (mediaPlayer != null) {
+            int progress = seekBar.getProgress();
+            mediaPlayer.seekTo(progress); // Ensure we start from the current SeekBar position
+            mediaPlayer.start();
+            updateSeekBar();
+            floatingActionButton.setImageResource(R.drawable.ic_media_pause);
+        }
+    }
+
     private void startPlaying() throws IOException {
         floatingActionButton.setImageResource(R.drawable.ic_media_pause);
-        mediaPlayer=new MediaPlayer();
+        mediaPlayer = new MediaPlayer();
         mediaPlayer.setDataSource(item.getPath());
         mediaPlayer.prepare();
         seekBar.setMax(mediaPlayer.getDuration());
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
+                int duration = mediaPlayer.getDuration(); // Get the duration in milliseconds
+                String formattedDuration = formatDuration(duration); // Format the duration
+                fileLengthTextView.setText(formattedDuration);
                 mediaPlayer.start();
             }
         });
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-                stopPlaying();
+                pausePlaying();
+                if(seekBar.getProgress()==seekBar.getMax())
+                {
+                    isPlaying=false;
+
+                }
             }
         });
         updateSeekBar();
@@ -131,7 +188,7 @@ public class AudioPlayerFragment extends DialogFragment {
     }
 
     private void setSeekBarsValues() {
-        ColorFilter colorFilter=new LightingColorFilter(getResources().getColor(R.color.design_default_color_primary),
+        ColorFilter colorFilter = new LightingColorFilter(getResources().getColor(R.color.design_default_color_primary),
                 getResources().getColor(R.color.design_default_color_primary));
         seekBar.getProgressDrawable().setColorFilter(colorFilter);
         seekBar.getThumb().setColorFilter(colorFilter);
@@ -139,17 +196,14 @@ public class AudioPlayerFragment extends DialogFragment {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(mediaPlayer!=null && fromUser)
-                {
+                if (mediaPlayer != null && fromUser) {
                     mediaPlayer.seekTo(progress);
                     handler.removeCallbacks(mRunnable);
-                    long minutes=TimeUnit.MILLISECONDS.toMinutes(mediaPlayer.getCurrentPosition());
-                    long seconds=TimeUnit.MILLISECONDS.toSeconds(mediaPlayer.getCurrentPosition())-TimeUnit.MINUTES.toSeconds(minutes);
-                    fileCurrentProgress.setText(String.format("%02d:%0d",minutes,seconds));
+                    long minutes = TimeUnit.MILLISECONDS.toMinutes(mediaPlayer.getCurrentPosition());
+                    long seconds = TimeUnit.MILLISECONDS.toSeconds(mediaPlayer.getCurrentPosition()) - TimeUnit.MINUTES.toSeconds(minutes);
+                    fileCurrentProgress.setText(String.format("%02d:%0d", minutes, seconds));
                     updateSeekBar();
-                }
-                else if(mediaPlayer==null && fromUser)
-                {
+                } else if (mediaPlayer == null && fromUser) {
                     try {
                         prepareMediaPlayerFromPoint(progress);
                     } catch (IOException e) {
@@ -172,7 +226,7 @@ public class AudioPlayerFragment extends DialogFragment {
     }
 
     private void prepareMediaPlayerFromPoint(int progress) throws IOException {
-        mediaPlayer=new MediaPlayer();
+        mediaPlayer = new MediaPlayer();
         mediaPlayer.setDataSource(item.getPath());
         mediaPlayer.prepare();
         seekBar.setMax(mediaPlayer.getDuration());
@@ -191,42 +245,51 @@ public class AudioPlayerFragment extends DialogFragment {
         mediaPlayer.stop();
         mediaPlayer.reset();
         mediaPlayer.release();
-        mediaPlayer=null;
+        mediaPlayer = null;
 
         seekBar.setProgress(seekBar.getMax());
-        isPlaying=!isPlaying;
+        isPlaying = !isPlaying;
 
         fileCurrentProgress.setText(fileLengthTextView.getText());
         seekBar.setProgress(seekBar.getMax());
 
     }
 
-    private Runnable mRunnable=new Runnable() {
+    private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
-            if(mediaPlayer!=null)
-            {
-                int currentPos=mediaPlayer.getCurrentPosition();
+            if (mediaPlayer != null) {
+                int currentPos = mediaPlayer.getCurrentPosition();
                 seekBar.setProgress(currentPos);
 
-                long minutes=TimeUnit.MILLISECONDS.toMinutes(currentPos);
-                long seconds=TimeUnit.MILLISECONDS.toSeconds(currentPos)-TimeUnit.MINUTES.toSeconds(minutes);
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(currentPos);
+                long seconds = TimeUnit.MILLISECONDS.toSeconds(currentPos) - TimeUnit.MINUTES.toSeconds(minutes);
 
-                fileCurrentProgress.setText(String.format("%02d:%02d",minutes,seconds));
+                fileCurrentProgress.setText(String.format("%02d:%02d", minutes, seconds));
                 updateSeekBar();
             }
         }
     };
 
     private void updateSeekBar() {
-        handler.postDelayed(mRunnable,1000);
+        handler.postDelayed(mRunnable, 1000);
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        item=(RecordingItem) getArguments().getSerializable("item");
-        minutes= TimeUnit.MILLISECONDS.toMinutes(item.getLength());
-        seconds=TimeUnit.NANOSECONDS.toSeconds(item.getLength())-TimeUnit.MINUTES.toSeconds(minutes);
+        item = (RecordingItem) getArguments().getSerializable("item");
+        minutes = TimeUnit.MILLISECONDS.toMinutes(item.getLength());
+        seconds = TimeUnit.NANOSECONDS.toSeconds(item.getLength()) - TimeUnit.MINUTES.toSeconds(minutes);
+    }
+    /**
+     * Formats a duration from milliseconds into a readable string (MM:SS).
+     * @param durationInMillis Duration in milliseconds.
+     * @return Formatted duration string.
+     */
+    private String formatDuration(int durationInMillis) {
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(durationInMillis);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(durationInMillis) - TimeUnit.MINUTES.toSeconds(minutes);
+        return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
     }
 }
