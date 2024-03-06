@@ -11,7 +11,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -22,11 +26,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import android.os.Parcelable;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.database.DbHelper;
@@ -68,9 +72,6 @@ public class RecordFragment extends Fragment {
     @BindView(R.id.btn_record)
     FloatingActionButton recordButton;
 
-    @BindView(R.id.btn_pause)
-    Button btnPause;
-
     @BindView(R.id.button_1)
     Button predictionButtonOne;
 
@@ -82,6 +83,9 @@ public class RecordFragment extends Fragment {
 
     @BindView(R.id.prediction_title)
     TextView predictionTitle;
+
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
 
     LoadingDialogBar loadingDialogBar;
 
@@ -129,7 +133,7 @@ public class RecordFragment extends Fragment {
 
         Collections.sort(distinctPredictionList, Collections.reverseOrder());
 
-        if(language.equals(LANGUAGE.RO))
+        if (language.equals(LANGUAGE.RO))
             distinctPredictionList.parallelStream().forEach(prediction ->
                     prediction.setCommon_name(dbHelper.getCommonNameByLatinName(prediction.getScientific_name())));
 
@@ -160,7 +164,32 @@ public class RecordFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         this.loadingDialogBar = new LoadingDialogBar(getContext());
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.prediction_menu, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.item1) {
+            // Handle action for item 1
+            return true;
+        } else if (id == R.id.item2) {
+            // Handle action for item 2
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 
@@ -173,19 +202,28 @@ public class RecordFragment extends Fragment {
         this.predictionButtonTwo.setVisibility(View.INVISIBLE);
         this.predictionButtonThree.setVisibility(View.INVISIBLE);
         this.predictionTitle.setVisibility(View.INVISIBLE);
+
         return recordView;
     }
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        btnPause.setVisibility(View.INVISIBLE);
         dbHelper = new RomanianBirdsNameDbHelper(getContext());
         // Register to receive broadcasts from the service
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(receiver,
                 new IntentFilter("send-predictions-to-record-fragment"));
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(recordingStoppedReceiver,
                 new IntentFilter("RECORDING_STOPPED"));
+
+        // Assuming your activity extends AppCompatActivity
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity != null) {
+            activity.setSupportActionBar(toolbar);
+            activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+
     }
 
     @OnClick(R.id.btn_record)

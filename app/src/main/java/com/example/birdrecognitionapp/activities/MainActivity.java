@@ -11,6 +11,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.widget.Toast;
 
 import com.example.birdrecognitionapp.R;
@@ -25,6 +27,8 @@ import static android.Manifest.permission.RECORD_AUDIO;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
+
+import java.util.Objects;
 
 /**
  * So this is the first checkpoint of the app
@@ -47,6 +51,13 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // make the action bar disappear
+        try {
+            Objects.requireNonNull(getSupportActionBar()).hide();
+        } catch (Exception e) {
+        }
+
         tabLayout = findViewById(R.id.tab_layout);
         viewPager2 = findViewById(R.id.view_pager);
         myViewPagerAdapter = new ViewPagerAdapter(this);
@@ -116,6 +127,7 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
         //int result2 = ContextCompat.checkSelfPermission(getApplicationContext(), MANAGE_EXTERNAL_STORAGE);
         return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
     }
+
 
     private void RequestPermissions() {
         // this method is used to request the
