@@ -1,10 +1,13 @@
 package com.example.birdrecognitionapp.fragments;
 
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,6 +24,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -93,8 +98,13 @@ public class RecordFragment extends Fragment {
 
     RomanianBirdsNameDbHelper dbHelper;
 
+    private static final String PREFS_NAME = "LanguagePrefs";
+    private static final String KEY_SELECTED_LANGUAGE = "selected_language";
+
     private boolean startRecording = true;
     private boolean pauseRecording = true;
+
+    private LANGUAGE PREDICTION_LANGUAGE;
 
     long timeWhenPaused = 0;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -106,7 +116,7 @@ public class RecordFragment extends Fragment {
                 // Handle the received data
                 List<?> responseList = intent.getParcelableArrayListExtra("predictionList");
                 List<SoundPredictionResponse> predictionList = new ArrayList(responseList);
-                updateUI(predictionList, LANGUAGE.RO);
+                updateUI(predictionList, PREDICTION_LANGUAGE);
             }
 
         }
@@ -142,7 +152,7 @@ public class RecordFragment extends Fragment {
                 switch (i) {
                     case 0:
                         predictionButtonOne.setVisibility(View.VISIBLE);
-                        predictionButtonOne.setText(String.valueOf(dbHelper.getCommonNameByLatinName(distinctPredictionList.get(i).getScientific_name())));
+                        predictionButtonOne.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
                         break;
                     case 1:
                         predictionButtonTwo.setVisibility(View.VISIBLE);
@@ -177,19 +187,72 @@ public class RecordFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.item1) {
-            // Handle action for item 1
+        if (id == R.id.language) {
+            // Inflate the dialog's layout
+            LayoutInflater inflater = requireActivity().getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.dialog_language_selection, null);
+
+            // Restore the saved language selection
+            String savedLanguage = getSavedLanguage();
+            RadioButton radioEnglish = dialogView.findViewById(R.id.radioEnglish);
+            RadioButton radioRomanian = dialogView.findViewById(R.id.radioRomanian);
+
+            if (savedLanguage.equals("Romanian")) {
+                radioRomanian.setChecked(true);
+            } else {
+                radioEnglish.setChecked(true);
+            }
+
+            // Create the AlertDialog
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setView(dialogView)
+                    .setTitle("Choose your language")
+                    .setPositiveButton("Continue", (dialog, which) -> {
+                        RadioGroup radioGroup = dialogView.findViewById(R.id.radioGroupLanguages);
+                        int checkedRadioButtonId = radioGroup.getCheckedRadioButtonId();
+                        switch (checkedRadioButtonId) {
+                            case R.id.radioEnglish:
+                                saveSelectedLanguage("English");
+                                PREDICTION_LANGUAGE = LANGUAGE.EN;
+                                break;
+                            case R.id.radioRomanian:
+                                saveSelectedLanguage("Romanian");
+                                PREDICTION_LANGUAGE = LANGUAGE.RO;
+                                break;
+                        }
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return true;
-        } else if (id == R.id.item2) {
-            // Handle action for item 2
+        } else if (id == R.id.location) {
+            // Handle action for location item
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void saveSelectedLanguage(String language) {
+        Activity activity = getActivity();
+        if (activity != null) {
+            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(KEY_SELECTED_LANGUAGE, language);
+            editor.apply();
+        }
+    }
+
+    private String getSavedLanguage() {
+        Activity activity = getActivity();
+        if (activity != null) {
+            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            return sharedPref.getString(KEY_SELECTED_LANGUAGE, "English"); // Default to English
+        }
+        return "English"; // Default to English if getActivity() is null
     }
 
 
@@ -223,6 +286,12 @@ public class RecordFragment extends Fragment {
             activity.setSupportActionBar(toolbar);
             activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
+
+        String selectedPredictionLanguage = getSavedLanguage();
+        if (selectedPredictionLanguage.equals("English"))
+            PREDICTION_LANGUAGE = LANGUAGE.EN;
+        else
+            PREDICTION_LANGUAGE = LANGUAGE.RO;
 
     }
 
