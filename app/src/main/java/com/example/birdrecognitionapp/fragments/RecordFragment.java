@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.Settings;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,7 +37,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.R;
-import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.database.RomanianBirdsNameDbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.enums.LANGUAGE;
@@ -56,10 +54,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 import butterknife.BindView;
@@ -98,11 +94,14 @@ public class RecordFragment extends Fragment {
 
     RomanianBirdsNameDbHelper dbHelper;
 
-    private static final String PREFS_NAME = "LanguagePrefs";
+    private static final String PREFS_LANGUAGE = "LanguagePrefs";
     private static final String KEY_SELECTED_LANGUAGE = "selected_language";
 
+    private static final String PREFS_LOCATION = "LocationPrefs";
+    private static final String KEY_SELECTED_LOCATION = "selected_option_location";
+
     private boolean startRecording = true;
-    private boolean pauseRecording = true;
+    private boolean useLocation;
 
     private LANGUAGE PREDICTION_LANGUAGE;
 
@@ -152,22 +151,38 @@ public class RecordFragment extends Fragment {
                 switch (i) {
                     case 0:
                         predictionButtonOne.setVisibility(View.VISIBLE);
-                        predictionButtonOne.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        predictionButtonOne.setText(
+                                String.valueOf(distinctPredictionList.get(0).getCommon_name()) + " " +
+                                        String.format("%.2f", distinctPredictionList.get(0).getConfidence() * 100) + "%"
+                        );
+                        System.out.println(distinctPredictionList.get(i));
                         break;
                     case 1:
                         predictionButtonTwo.setVisibility(View.VISIBLE);
-                        predictionButtonTwo.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        System.out.println(distinctPredictionList.get(i));
+                        predictionButtonTwo.setText(
+                                String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
+                                        String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
+                        );
                         break;
                     case 2:
                         predictionButtonThree.setVisibility(View.VISIBLE);
-                        predictionButtonThree.setText(String.valueOf(distinctPredictionList.get(i).getCommon_name()));
+                        predictionButtonThree.setText(
+                                String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
+                                        String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
+                        );
                         break;
                     // Handle additional cases if needed
                 }
             }
         else {
             predictionButtonOne.setVisibility(View.VISIBLE);
-            predictionButtonOne.setText("No match found :(");
+            if(language.equals(LANGUAGE.EN))
+                predictionButtonOne.setText("No match found :(");
+            else
+            {
+                predictionButtonOne.setText("Nu s-a putut prezice :(");
+            }
         }
     }
 
@@ -229,19 +244,40 @@ public class RecordFragment extends Fragment {
             dialog.show();
             return true;
         } else if (id == R.id.location) {
-            // Handle action for location item
+            useLocation = !useLocation;
+            item.setChecked(useLocation);
+            saveSelectedOption(useLocation);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onPrepareOptionsMenu(@NonNull Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        MenuItem locationItem = menu.findItem(R.id.location);
+        if (locationItem != null) {
+            // Set the checked state based on the saved preference
+            locationItem.setChecked(getSavedOption());
+        }
+    }
+
     private void saveSelectedLanguage(String language) {
         Activity activity = getActivity();
         if (activity != null) {
-            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LANGUAGE, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putString(KEY_SELECTED_LANGUAGE, language);
+            editor.apply();
+        }
+    }
+    private void saveSelectedOption(boolean option) {
+        Activity activity = getActivity();
+        if (activity != null) {
+            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LOCATION, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean(KEY_SELECTED_LOCATION, option);
             editor.apply();
         }
     }
@@ -249,10 +285,19 @@ public class RecordFragment extends Fragment {
     private String getSavedLanguage() {
         Activity activity = getActivity();
         if (activity != null) {
-            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LANGUAGE, Context.MODE_PRIVATE);
             return sharedPref.getString(KEY_SELECTED_LANGUAGE, "English"); // Default to English
         }
         return "English"; // Default to English if getActivity() is null
+    }
+
+    private boolean getSavedOption() {
+        Activity activity = getActivity();
+        if (activity != null) {
+            SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LOCATION, Context.MODE_PRIVATE);
+            return sharedPref.getBoolean(KEY_SELECTED_LOCATION, false); // Default to false
+        }
+        return false; // Default to false if getActivity() is null
     }
 
 
@@ -261,10 +306,7 @@ public class RecordFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View recordView = inflater.inflate(R.layout.fragment_record, container, false);
         ButterKnife.bind(this, recordView);
-        this.predictionButtonOne.setVisibility(View.INVISIBLE);
-        this.predictionButtonTwo.setVisibility(View.INVISIBLE);
-        this.predictionButtonThree.setVisibility(View.INVISIBLE);
-        this.predictionTitle.setVisibility(View.INVISIBLE);
+        resetButtons();
 
         return recordView;
     }
@@ -293,6 +335,17 @@ public class RecordFragment extends Fragment {
         else
             PREDICTION_LANGUAGE = LANGUAGE.RO;
 
+        boolean savedCheckboxOption=getSavedOption();
+
+        if(savedCheckboxOption) {
+            useLocation=true;
+        }
+        else {
+            useLocation=false;
+        }
+
+
+
     }
 
     @OnClick(R.id.btn_record)
@@ -313,12 +366,9 @@ public class RecordFragment extends Fragment {
 
     private void onRecord(boolean startRecording) {
         Intent intent = new Intent(getContext(), RecordingService.class);
-
+        intent.putExtra("useLocation",useLocation);
         if (startRecording) {
-            this.predictionButtonOne.setVisibility(View.INVISIBLE);
-            this.predictionButtonTwo.setVisibility(View.INVISIBLE);
-            this.predictionButtonThree.setVisibility(View.INVISIBLE);
-            this.predictionTitle.setVisibility(View.INVISIBLE);
+            resetButtons();
 
             recordButton.setImageResource(R.drawable.ic_media_stop);
             Toast.makeText(getContext(), "Recording started", Toast.LENGTH_SHORT).show();
@@ -355,13 +405,13 @@ public class RecordFragment extends Fragment {
     public void predictRecording(RecordingItem recordingItem) {
         // Show loading dialog
         loadingDialogBar.showDialog("Predicting");
-
+        resetButtons();
         // Read the file and encode it to Base64
         String base64EncodedString = encodeFileToBase64(recordingItem.getPath());
 
         if (base64EncodedString != null) {
 
-            new RecordingService().postData(base64EncodedString);
+            new RecordingService().postData(base64EncodedString,useLocation);
         }
     }
 
@@ -373,5 +423,12 @@ public class RecordFragment extends Fragment {
             e.printStackTrace();
             return null;
         }
+    }
+    private void resetButtons()
+    {
+        this.predictionButtonOne.setVisibility(View.INVISIBLE);
+        this.predictionButtonTwo.setVisibility(View.INVISIBLE);
+        this.predictionButtonThree.setVisibility(View.INVISIBLE);
+        this.predictionTitle.setVisibility(View.INVISIBLE);
     }
 }

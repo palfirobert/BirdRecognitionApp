@@ -3,24 +3,24 @@ package com.example.birdrecognitionapp.services;
 
 import android.Manifest;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.example.birdrecognitionapp.activities.MainActivity;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
@@ -34,15 +34,12 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -76,6 +73,9 @@ public class RecordingService extends Service {
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO; // Change to CHANNEL_IN_MONO if desired.
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     private int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+    private boolean useLocation;
+
+    private double lon,lat;
 
     @Override
     public void onCreate() {
@@ -92,8 +92,23 @@ public class RecordingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         System.out.println("SA INTRAT");
-        startRecording();
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        String locationProvider = LocationManager.GPS_PROVIDER;
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+            if (lastKnownLocation != null) {
+                double latitude = lastKnownLocation.getLatitude();
+                double longitude = lastKnownLocation.getLongitude();
+
+                // Now you have the lat and lon
+                // You can now put these values in your parameters map
+                lon=longitude;
+                lat=latitude;
+            }
+        }
+        useLocation = intent.getBooleanExtra("useLocation", false); // Default to false if not found
+        startRecording();
         return START_STICKY;
     }
 
@@ -226,7 +241,7 @@ public class RecordingService extends Service {
             Intent intent = new Intent("RECORDING_STOPPED");
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
-            postData(Base64.getEncoder().encodeToString(fileContent));
+            postData(Base64.getEncoder().encodeToString(fileContent),useLocation);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -249,7 +264,7 @@ public class RecordingService extends Service {
     }
 
 
-    public void postData(String soundInBase64) {
+    public void postData(String soundInBase64,boolean useLocation) {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
@@ -260,49 +275,102 @@ public class RecordingService extends Service {
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .build();
 
-        // Create a Retrofit instance with the custom OkHttpClient
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(okHttpClient)  // Set the custom OkHttpClient
-                .build();
+        if(!useLocation) {// Create a Retrofit instance with the custom OkHttpClient
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(okHttpClient)  // Set the custom OkHttpClient
+                    .build();
 
-        // Create a RetrofitAPI instance
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+            // Create a RetrofitAPI instance
+            RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
-        // Create a Call object for the API request
-        Call<List<SoundPredictionResponse>> call = retrofitAPI.createPost(soundInBase64);
+            // Create a Call object for the API request
+            Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithoutLocation(soundInBase64);
 
-        // Enqueue the API call
-        call.enqueue(new Callback<List<SoundPredictionResponse>>() {
-            @Override
-            public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
-                // Handle the successful response
-                retryCount = 0; // Reset retry count
-                //Toast.makeText(getApplicationContext(), "Data added to API", Toast.LENGTH_SHORT).show();
-                List<SoundPredictionResponse> responseFromAPI = response.body();
-                //assert responseFromAPI != null;
-                Collections.sort(responseFromAPI);
-                for (SoundPredictionResponse sound : responseFromAPI) {
-                    System.out.println(sound.toString());
-                }
-                // Broadcast the list to the fragment
-                sendBroadcast(responseFromAPI);
-            }
-
-            @Override
-            public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
-                if (retryCount < MAX_RETRIES) {
-                    retryCount++;
-                    System.out.println("Retrying... Attempt: " + retryCount);
-                    postData(soundInBase64); // Retry the call
-                } else {
-                    // Handle the failure after exceeding retry count
-                    t.printStackTrace();
+            // Enqueue the API call
+            call.enqueue(new Callback<List<SoundPredictionResponse>>() {
+                @Override
+                public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
+                    // Handle the successful response
                     retryCount = 0; // Reset retry count
+                    List<SoundPredictionResponse> responseFromAPI = response.body();
+                    //assert responseFromAPI != null;
+                    Collections.sort(responseFromAPI);
+                    for (SoundPredictionResponse sound : responseFromAPI) {
+                        System.out.println(sound.toString());
+                    }
+                    // Broadcast the list to the fragment
+                    sendBroadcast(responseFromAPI);
                 }
-            }
-        });
+
+                @Override
+                public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
+                    if (retryCount < MAX_RETRIES) {
+                        retryCount++;
+                        System.out.println("Retrying... Attempt: " + retryCount);
+                        postData(soundInBase64, useLocation); // Retry the call
+                    } else {
+                        // Handle the failure after exceeding retry count
+                        t.printStackTrace();
+                        retryCount = 0; // Reset retry count
+                    }
+                }
+            });
+        }
+        else{
+            // create request body
+            HashMap<String, Object> parameters = new HashMap<>();
+
+
+
+            parameters.put("sound_data", soundInBase64);
+            parameters.put("lon", lon);
+            parameters.put("lat", lat);
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(okHttpClient)  // Set the custom OkHttpClient
+                    .build();
+
+            // Create a RetrofitAPI instance
+            RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+
+            // Create a Call object for the API request
+            Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithLocation(parameters);
+
+            // Enqueue the API call
+            call.enqueue(new Callback<List<SoundPredictionResponse>>() {
+                @Override
+                public void onResponse(Call<List<SoundPredictionResponse>> call, Response<List<SoundPredictionResponse>> response) {
+                    // Handle the successful response
+                    retryCount = 0; // Reset retry count
+                    List<SoundPredictionResponse> responseFromAPI = response.body();
+                    //assert responseFromAPI != null;
+                    Collections.sort(responseFromAPI);
+                    for (SoundPredictionResponse sound : responseFromAPI) {
+                        System.out.println(sound.toString());
+                    }
+                    // Broadcast the list to the fragment
+                    sendBroadcast(responseFromAPI);
+                }
+
+                @Override
+                public void onFailure(Call<List<SoundPredictionResponse>> call, Throwable t) {
+                    if (retryCount < MAX_RETRIES) {
+                        retryCount++;
+                        System.out.println("Retrying... Attempt: " + retryCount);
+                        postData(soundInBase64, useLocation); // Retry the call
+                    } else {
+                        // Handle the failure after exceeding retry count
+                        t.printStackTrace();
+                        retryCount = 0; // Reset retry count
+                    }
+                }
+            });
+
+        }
     }
 
 

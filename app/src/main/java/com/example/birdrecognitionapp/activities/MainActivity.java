@@ -104,14 +104,12 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
                     boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean permissionToStore = grantResults[1] == PackageManager.PERMISSION_GRANTED;
                     boolean permissionToReadStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
-                    // boolean permissionToManageStorage = grantResults[2] == PackageManager.PERMISSION_GRANTED;
+                    boolean permissionToLocationFine = grantResults.length > 3 && grantResults[3] == PackageManager.PERMISSION_GRANTED;
+                    boolean permissionToLocationCoarse = grantResults.length > 4 && grantResults[4] == PackageManager.PERMISSION_GRANTED;
 
-                    if (permissionToRecord && permissionToStore && permissionToReadStorage) {
+                    if (permissionToRecord && permissionToStore && permissionToReadStorage && permissionToLocationFine && permissionToLocationCoarse) {
                         Toast.makeText(getApplicationContext(), "Permissions Granted", Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                        Uri uri = Uri.fromParts("package", getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
+                        // Additional logic to handle permission granted case
                     } else {
                         Toast.makeText(getApplicationContext(), "Permissions Denied", Toast.LENGTH_LONG).show();
                     }
@@ -120,19 +118,22 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
         }
     }
 
+
     public boolean CheckPermissions() {
         // this method is used to check permission
-        int result = ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
-        int result1 = ContextCompat.checkSelfPermission(getApplicationContext(), RECORD_AUDIO);
-        //int result2 = ContextCompat.checkSelfPermission(getApplicationContext(), MANAGE_EXTERNAL_STORAGE);
-        return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
+        int resultStorage = ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
+        int resultRecord = ContextCompat.checkSelfPermission(getApplicationContext(), RECORD_AUDIO);
+        int resultLocationFine = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION);
+        int resultLocationCoarse = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        return resultStorage == PackageManager.PERMISSION_GRANTED && resultRecord == PackageManager.PERMISSION_GRANTED &&
+                resultLocationFine == PackageManager.PERMISSION_GRANTED && resultLocationCoarse == PackageManager.PERMISSION_GRANTED;
     }
 
 
     private void RequestPermissions() {
         // this method is used to request the
         // permission for audio recording and storage.
-        ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_AUDIO_PERMISSION_CODE);
     }
 
     @Override
