@@ -109,7 +109,10 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
 
                     if (permissionToRecord && permissionToStore && permissionToReadStorage && permissionToLocationFine && permissionToLocationCoarse) {
                         Toast.makeText(getApplicationContext(), "Permissions Granted", Toast.LENGTH_LONG).show();
-                        // Additional logic to handle permission granted case
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
                     } else {
                         Toast.makeText(getApplicationContext(), "Permissions Denied", Toast.LENGTH_LONG).show();
                     }
@@ -117,7 +120,6 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
                 break;
         }
     }
-
 
     public boolean CheckPermissions() {
         // this method is used to check permission
