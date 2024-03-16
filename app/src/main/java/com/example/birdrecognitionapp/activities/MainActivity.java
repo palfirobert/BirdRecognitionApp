@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
                     boolean permissionToLocationFine = grantResults.length > 3 && grantResults[3] == PackageManager.PERMISSION_GRANTED;
                     boolean permissionToLocationCoarse = grantResults.length > 4 && grantResults[4] == PackageManager.PERMISSION_GRANTED;
 
-                    if (permissionToRecord && permissionToStore && permissionToReadStorage && permissionToLocationFine && permissionToLocationCoarse) {
+                    if (permissionToRecord && permissionToStore && permissionToReadStorage) {
                         Toast.makeText(getApplicationContext(), "Permissions Granted", Toast.LENGTH_LONG).show();
                         Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                         Uri uri = Uri.fromParts("package", getPackageName(), null);
@@ -120,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
                 break;
         }
     }
+
 
     public boolean CheckPermissions() {
         // this method is used to check permission

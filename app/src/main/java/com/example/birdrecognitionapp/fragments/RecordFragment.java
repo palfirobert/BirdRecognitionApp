@@ -13,6 +13,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -184,6 +186,27 @@ public class RecordFragment extends Fragment {
                 predictionButtonOne.setText("Nu s-a putut prezice :(");
             }
         }
+
+        vibratePhone();
+    }
+    private void vibratePhone() {
+        // Get the Vibrator service
+        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null) {
+            // Check if the device has a vibrator
+            if (vibrator.hasVibrator()) {
+                // Vibrate for 500 milliseconds
+                // For API 26 or above
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    // Deprecated in API 26
+                    vibrator.vibrate(300);
+                }
+            } else {
+                Toast.makeText(getContext(), "No vibrator found on device.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
@@ -191,6 +214,7 @@ public class RecordFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         this.loadingDialogBar = new LoadingDialogBar(getContext());
+
     }
 
     @Override

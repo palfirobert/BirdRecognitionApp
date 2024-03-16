@@ -5,12 +5,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.media.MediaMetadataRetriever;
+import android.os.Environment;
 
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DbHelper extends SQLiteOpenHelper {
     private Context context;
@@ -29,7 +33,8 @@ public class DbHelper extends SQLiteOpenHelper {
             COLUMN_LENGTH + " INTEGER" + COMA_SEP +
             COLUMN_TIME_ADDED + " INTEGER " + ")";
     private static OnDatabaseChangedListener onDatabaseChangedListener;
-
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -99,7 +104,93 @@ public class DbHelper extends SQLiteOpenHelper {
 
     }
 
+
     public static void setOnDatabaseChangedListener(OnDatabaseChangedListener listener) {
         onDatabaseChangedListener = listener;
     }
+
+    /**
+     * Method that sync the sql database with the internal storage.
+     */
+    public void synchronizeDatabaseWithStorage() {
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                ArrayList<RecordingItem> allRecordings = getAllAudios();
+                if (allRecordings == null) return;
+                // Use your specific directory for sound recordings
+                File directory = new File(filePath);
+                if (!directory.exists()) {
+                    // Directory doesn't exist, no synchronization needed
+                    return;
+                }
+
+                File[] files = directory.listFiles();
+                if (files != null) {
+                    ArrayList<String> filePaths = new ArrayList<>();
+                    for (File file : files) {
+                        String absolutePath = filePath + file.getName();
+                        filePaths.add(absolutePath);
+                    }
+
+                    SQLiteDatabase db = getWritableDatabase();
+                    for (RecordingItem item : allRecordings) {
+                        if (!filePaths.contains(item.getPath())) {
+                            // File does not exist, delete entry from database
+                            deleteRecordingEntryFromDatabase(item.getPath(), db);
+                        }
+                    }
+                }
+
+                for (File file : files) {
+                    String absolutePath = filePath + file.getName();
+                    // Check if this file's path is not in the list of all recordings' paths
+                    boolean existsInDatabase = false;
+                    for (RecordingItem item : allRecordings) {
+                        if (item.getPath().equals(absolutePath)) {
+                            existsInDatabase = true;
+                            break;
+                        }
+                    }
+
+                    if (!existsInDatabase && !file.getName().startsWith(".")) {
+                        // This file is not in the database, so add it
+                        addRecordingForNewFile(file);
+                    }
+                }
+            }
+        });
+
+    }
+
+
+    private void deleteRecordingEntryFromDatabase(String path, SQLiteDatabase db) {
+        db.delete(TABLE_NAME, COLUMN_PATH + " = ?", new String[]{path});
+    }
+
+    private void addRecordingForNewFile(File file) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(file.getAbsolutePath());
+            String durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            long length = Long.parseLong(durationStr); // Duration in milliseconds
+
+            long timeAdded = file.lastModified(); // Use file's last modified time as time added
+            String absolutePath = filePath + file.getName();
+            // Now you have the length in milliseconds, proceed to add the recording
+            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded);
+            addRecording(newRecording);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            retriever.release();
+        }
+    }
+
+    public void shutdownExecutorService() {
+        if (!executorService.isShutdown()) {
+            executorService.shutdown();
+        }
+    }
+
 }

@@ -81,12 +81,15 @@ public class SavedRecordingsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
         dbHelper=new DbHelper(getContext());
+
         recyclerView.setHasFixedSize(true);
         LinearLayoutManager linearLayoutManager=new LinearLayoutManager(getContext());
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         linearLayoutManager.setStackFromEnd(true);
         linearLayoutManager.setReverseLayout(true);
+
         recyclerView.setLayoutManager(linearLayoutManager);
+
         listAudios=dbHelper.getAllAudios();
         if(listAudios==null)
         {
@@ -97,6 +100,15 @@ public class SavedRecordingsFragment extends Fragment {
             savedRecordingsAdapter=new SavedRecordingsAdapter(getActivity(),listAudios,linearLayoutManager);
             recyclerView.setAdapter(savedRecordingsAdapter);
         }
+        dbHelper.synchronizeDatabaseWithStorage(); // Synchronize before fetching data
 
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.shutdownExecutorService();
+        }
     }
 }
