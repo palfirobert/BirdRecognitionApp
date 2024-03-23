@@ -90,18 +90,26 @@ public class SavedRecordingsFragment extends Fragment {
 
         recyclerView.setLayoutManager(linearLayoutManager);
 
-        listAudios=dbHelper.getAllAudios();
-        if(listAudios==null)
-        {
-            Toast.makeText(getContext(), "No audio files found.", Toast.LENGTH_SHORT).show();
-        }
-        else
-        {
-            savedRecordingsAdapter=new SavedRecordingsAdapter(getActivity(),listAudios,linearLayoutManager);
-            recyclerView.setAdapter(savedRecordingsAdapter);
-        }
+        loadData();
         dbHelper.synchronizeDatabaseWithStorage(); // Synchronize before fetching data
 
+    }
+
+    private void loadData() {
+        listAudios = dbHelper.getAllAudios();
+        if (listAudios == null) {
+            Toast.makeText(getContext(), "No audio files found.", Toast.LENGTH_SHORT).show();
+        } else {
+            savedRecordingsAdapter = new SavedRecordingsAdapter(getActivity(), listAudios, new LinearLayoutManager(getContext()));
+            recyclerView.setAdapter(savedRecordingsAdapter);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        dbHelper.synchronizeDatabaseWithStorage(); // Synchronize before fetching data
+        loadData();
     }
 
     @Override

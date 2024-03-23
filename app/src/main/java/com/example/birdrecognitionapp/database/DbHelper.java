@@ -86,7 +86,9 @@ public class DbHelper extends SQLiteOpenHelper {
     public ArrayList<RecordingItem> getAllAudios() {
         ArrayList<RecordingItem> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from " + TABLE_NAME, null);
+        // Updated query to order by timeAdded in descending order
+        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY time_added DESC";
+        Cursor cursor = db.rawQuery(query, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 String name = cursor.getString(1);
@@ -101,8 +103,8 @@ public class DbHelper extends SQLiteOpenHelper {
         } else {
             return null;
         }
-
     }
+
 
 
     public static void setOnDatabaseChangedListener(OnDatabaseChangedListener listener) {
