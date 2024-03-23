@@ -39,7 +39,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.R;
-import com.example.birdrecognitionapp.database.RomanianBirdsNameDbHelper;
+import com.example.birdrecognitionapp.database.BirdsDbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.enums.LANGUAGE;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
@@ -94,7 +94,7 @@ public class RecordFragment extends Fragment {
 
     MainActivityRecordFragmentSharedModel sharedModel;
 
-    RomanianBirdsNameDbHelper dbHelper;
+    BirdsDbHelper dbHelper;
 
     private static final String PREFS_LANGUAGE = "LanguagePrefs";
     private static final String KEY_SELECTED_LANGUAGE = "selected_language";
@@ -106,6 +106,9 @@ public class RecordFragment extends Fragment {
     private boolean useLocation;
 
     private LANGUAGE PREDICTION_LANGUAGE;
+
+    private List<String> prediction_urls;
+    List<SoundPredictionResponse> distinctPredictionList;
 
     long timeWhenPaused = 0;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -140,13 +143,17 @@ public class RecordFragment extends Fragment {
             map.put(response.getCommon_name(), response);
         }
 
-        List<SoundPredictionResponse> distinctPredictionList = new ArrayList(map.values());
-
+        distinctPredictionList = new ArrayList(map.values());
+        prediction_urls=new ArrayList<>();
         Collections.sort(distinctPredictionList, Collections.reverseOrder());
 
-        if (language.equals(LANGUAGE.RO))
+        if (language.equals(LANGUAGE.RO)) {
             distinctPredictionList.parallelStream().forEach(prediction ->
                     prediction.setCommon_name(dbHelper.getCommonNameByLatinName(prediction.getScientific_name())));
+            distinctPredictionList.stream().forEach(prediction ->
+                    prediction_urls.add(dbHelper.getUrlByLatinName(prediction.getScientific_name())));
+            System.out.println(prediction_urls);
+        }
 
         if (distinctPredictionList.size() != 0)
             for (int i = 0; i < distinctPredictionList.size(); i++) {
@@ -157,11 +164,9 @@ public class RecordFragment extends Fragment {
                                 String.valueOf(distinctPredictionList.get(0).getCommon_name()) + " " +
                                         String.format("%.2f", distinctPredictionList.get(0).getConfidence() * 100) + "%"
                         );
-                        System.out.println(distinctPredictionList.get(i));
                         break;
                     case 1:
                         predictionButtonTwo.setVisibility(View.VISIBLE);
-                        System.out.println(distinctPredictionList.get(i));
                         predictionButtonTwo.setText(
                                 String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
                                         String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
@@ -179,16 +184,16 @@ public class RecordFragment extends Fragment {
             }
         else {
             predictionButtonOne.setVisibility(View.VISIBLE);
-            if(language.equals(LANGUAGE.EN))
+            if (language.equals(LANGUAGE.EN))
                 predictionButtonOne.setText("No match found :(");
-            else
-            {
+            else {
                 predictionButtonOne.setText("Nu s-a putut prezice :(");
             }
         }
 
         vibratePhone();
     }
+
     private void vibratePhone() {
         // Get the Vibrator service
         Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
@@ -296,6 +301,7 @@ public class RecordFragment extends Fragment {
             editor.apply();
         }
     }
+
     private void saveSelectedOption(boolean option) {
         Activity activity = getActivity();
         if (activity != null) {
@@ -332,6 +338,55 @@ public class RecordFragment extends Fragment {
         ButterKnife.bind(this, recordView);
         resetButtons();
 
+        this.predictionButtonOne.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String searchString;
+                if (prediction_urls.get(0) != null) {
+                    searchString = prediction_urls.get(0); // Use the URL directly if available
+                } else {
+                    searchString = "https://www.google.com/search?q=" + Uri.encode(distinctPredictionList.get(0).getCommon_name());
+                }
+
+                // Create an Intent to open the browser with the Google search URL
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(searchString));
+                startActivity(browserIntent);
+            }
+        });
+
+
+        this.predictionButtonTwo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String searchString;
+                if (prediction_urls.get(1) != null) {
+                    searchString = prediction_urls.get(1); // Use the URL directly if available
+                } else {
+                    searchString = "https://www.google.com/search?q=" + Uri.encode(distinctPredictionList.get(1).getCommon_name());
+                }
+
+                // Create an Intent to open the browser with the Google search URL
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(searchString));
+                startActivity(browserIntent);
+            }
+        });
+
+
+        this.predictionButtonThree.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String searchString;
+                if (prediction_urls.get(2) != null) {
+                    searchString = prediction_urls.get(2); // Use the URL directly if available
+                } else {
+                    searchString = "https://www.google.com/search?q=" + Uri.encode(distinctPredictionList.get(2).getCommon_name());
+                }
+
+                // Create an Intent to open the browser with the Google search URL
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(searchString));
+                startActivity(browserIntent);
+            }
+        });
         return recordView;
     }
 
@@ -339,7 +394,7 @@ public class RecordFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        dbHelper = new RomanianBirdsNameDbHelper(getContext());
+        dbHelper = new BirdsDbHelper(getContext());
         // Register to receive broadcasts from the service
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(receiver,
                 new IntentFilter("send-predictions-to-record-fragment"));
@@ -359,15 +414,13 @@ public class RecordFragment extends Fragment {
         else
             PREDICTION_LANGUAGE = LANGUAGE.RO;
 
-        boolean savedCheckboxOption=getSavedOption();
+        boolean savedCheckboxOption = getSavedOption();
 
-        if(savedCheckboxOption) {
-            useLocation=true;
+        if (savedCheckboxOption) {
+            useLocation = true;
+        } else {
+            useLocation = false;
         }
-        else {
-            useLocation=false;
-        }
-
 
 
     }
@@ -390,7 +443,7 @@ public class RecordFragment extends Fragment {
 
     private void onRecord(boolean startRecording) {
         Intent intent = new Intent(getContext(), RecordingService.class);
-        intent.putExtra("useLocation",useLocation);
+        intent.putExtra("useLocation", useLocation);
         if (startRecording) {
             resetButtons();
 
@@ -435,7 +488,7 @@ public class RecordFragment extends Fragment {
 
         if (base64EncodedString != null) {
 
-            new RecordingService().postData(base64EncodedString,useLocation);
+            new RecordingService().postData(base64EncodedString, useLocation);
         }
     }
 
@@ -448,11 +501,12 @@ public class RecordFragment extends Fragment {
             return null;
         }
     }
-    private void resetButtons()
-    {
+
+    private void resetButtons() {
         this.predictionButtonOne.setVisibility(View.INVISIBLE);
         this.predictionButtonTwo.setVisibility(View.INVISIBLE);
         this.predictionButtonThree.setVisibility(View.INVISIBLE);
         this.predictionTitle.setVisibility(View.INVISIBLE);
     }
+
 }
