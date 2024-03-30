@@ -87,7 +87,7 @@ public class DbHelper extends SQLiteOpenHelper {
         ArrayList<RecordingItem> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         // Updated query to order by timeAdded in descending order
-        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY time_added DESC";
+        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY time_added ASC";
         Cursor cursor = db.rawQuery(query, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
