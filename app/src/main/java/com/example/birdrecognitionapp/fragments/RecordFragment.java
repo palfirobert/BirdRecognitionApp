@@ -1,6 +1,7 @@
 package com.example.birdrecognitionapp.fragments;
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -8,6 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -58,6 +63,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 import butterknife.BindView;
@@ -485,12 +491,25 @@ public class RecordFragment extends Fragment {
         resetButtons();
         // Read the file and encode it to Base64
         String base64EncodedString = encodeFileToBase64(recordingItem.getPath());
+        // get the location and send it to service method in case of long press "predict" button
+        Double lat=0.0;
+        Double lon=0.0;
 
         if (base64EncodedString != null) {
+            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            String locationProvider = LocationManager.GPS_PROVIDER;
 
-            new RecordingService().postData(base64EncodedString, useLocation);
+            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+                if (lastKnownLocation != null) {
+                    lat = lastKnownLocation.getLatitude();
+                    lon = lastKnownLocation.getLongitude();
+                }
+            }
+            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat),Optional.of(lon));
         }
     }
+
 
     private String encodeFileToBase64(String filePath) {
         try {
