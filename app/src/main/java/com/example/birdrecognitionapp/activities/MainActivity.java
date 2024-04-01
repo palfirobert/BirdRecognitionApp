@@ -11,14 +11,11 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.widget.Toast;
-
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.adapters.SavedRecordingsAdapter;
 import com.example.birdrecognitionapp.adapters.ViewPagerAdapter;
-import com.example.birdrecognitionapp.fragments.RecordFragment;
+
 import com.example.birdrecognitionapp.models.MainActivityRecordFragmentSharedModel;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.google.android.material.tabs.TabLayout;
