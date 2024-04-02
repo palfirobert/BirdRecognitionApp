@@ -14,7 +14,24 @@
         android:padding="20dp"
         android:layout_alignParentBottom="true"
         android:gravity="center_horizontal">
-
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/signup_name"
+            android:layout_marginTop="16dp"
+            android:drawableLeft="@drawable/ic_baseline_account_circle_24"
+            android:background="@drawable/login_form_border"
+            android:hint="Name"
+            android:padding="8dp"/>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/signup_surname"
+            android:layout_marginTop="16dp"
+            android:drawableLeft="@drawable/ic_baseline_account_circle_24"
+            android:background="@drawable/login_form_border"
+            android:hint="Surname"
+            android:padding="8dp"/>
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -35,6 +52,7 @@
             android:hint="Password"
             android:inputType="textPassword"
             android:padding="8dp"/>
+
 
         <EditText
             android:layout_width="match_parent"
