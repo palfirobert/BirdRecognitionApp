@@ -16,8 +16,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.concurrent.TimeUnit;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -51,9 +54,18 @@ public class LoginActivity extends AppCompatActivity {
                 if (email.equals("") || password.equals(""))
                     Toast.makeText(LoginActivity.this, "All fields are mandatory", Toast.LENGTH_SHORT).show();
                 else {
+
+                    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                            .connectTimeout(30, TimeUnit.SECONDS) // Set the connection timeout
+                            .readTimeout(30, TimeUnit.SECONDS) // Set the read timeout
+                            .writeTimeout(30, TimeUnit.SECONDS) // Set the write timeout
+                            .build();
+
+                    // Use the custom OkHttpClient in your Retrofit builder
                     Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                            .baseUrl("http://palfirobert.pythonanywhere.com") // Your base URL
                             .addConverterFactory(GsonConverterFactory.create())
+                            .client(okHttpClient) // Set the custom client here
                             .build();
                     // Prepare the login request
                     LoginReq loginReq = new LoginReq(email, password);

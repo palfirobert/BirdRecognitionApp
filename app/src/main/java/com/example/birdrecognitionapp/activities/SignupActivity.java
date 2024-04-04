@@ -76,7 +76,7 @@ public class SignupActivity extends AppCompatActivity {
                 } else {
                     // Initialize Retrofit for the signup request
                     Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                            .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
                             .addConverterFactory(GsonConverterFactory.create())
                             .build();
 

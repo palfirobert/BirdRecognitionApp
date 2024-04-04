@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
+import com.example.birdrecognitionapp.fragments.ObservationSheetFragment;
 import com.example.birdrecognitionapp.fragments.RecordFragment;
 import com.example.birdrecognitionapp.fragments.SavedRecordingsFragment;
 
@@ -20,12 +21,13 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
         switch (position){
             case 0: return new RecordFragment();
             case 1: return new SavedRecordingsFragment();
+            case 2: return new ObservationSheetFragment();
             default: return new RecordFragment();
         }
     }
 
     @Override
     public int getItemCount() {
-        return 2;
+        return 3;
     }
 }

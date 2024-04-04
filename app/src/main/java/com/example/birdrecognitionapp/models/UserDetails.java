@@ -63,7 +63,7 @@ public class UserDetails implements Serializable {
     public static void updateUserDetails(UserDetails userDetails)
     {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         boolean useLocation= userDetails.getUse_location() == 1;
