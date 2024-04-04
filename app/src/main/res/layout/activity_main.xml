@@ -22,6 +22,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Recordings" />
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Observation sheets" />
 
     </com.google.android.material.tabs.TabLayout>
 

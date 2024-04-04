@@ -1,5 +1,6 @@
 package com.example.birdrecognitionapp.adapters;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -7,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,8 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.fragments.AudioPlayerFragment;
-import com.example.birdrecognitionapp.fragments.RecordFragment;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
+import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
 import java.util.ArrayList;
@@ -150,6 +152,26 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
                             list.remove(getAdapterPosition());
                             notifyItemRemoved(getAdapterPosition());
                             Toast.makeText(context, "Deleted " + itemToDelete.getName(), Toast.LENGTH_SHORT).show();
+                            return true;
+                        case R.id.menu_generate_observation_sheet:
+                            // Inflate the dialog's layout
+                            LayoutInflater inflater = LayoutInflater.from(context);
+                            View dialogView = inflater.inflate(R.layout.dialog_observation_sheet, null);
+
+                            // Initialize your input fields here, e.g., EditText for species
+                            EditText editSpecies = dialogView.findViewById(R.id.editSpecies);
+
+                            // Create the AlertDialog for observation sheet
+                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                            builder.setView(dialogView)
+                                    .setTitle("Enter Observation Details")
+                                    .setPositiveButton("Save", (dialog, which) -> {
+                                        //todo logic for observation sheet
+                                    })
+                                    .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
                             return true;
                         default:
                             return false;
