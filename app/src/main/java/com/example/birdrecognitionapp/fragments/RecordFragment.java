@@ -50,6 +50,7 @@ import com.example.birdrecognitionapp.enums.LANGUAGE;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.MainActivityRecordFragmentSharedModel;
 import com.example.birdrecognitionapp.models.RecordingItem;
+import com.example.birdrecognitionapp.models.UserDetails;
 import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -102,6 +103,9 @@ public class RecordFragment extends Fragment {
 
     BirdsDbHelper dbHelper;
 
+    UserDetails userDetails = new UserDetails();
+
+
     private static final String PREFS_LANGUAGE = "LanguagePrefs";
     private static final String KEY_SELECTED_LANGUAGE = "selected_language";
 
@@ -150,7 +154,7 @@ public class RecordFragment extends Fragment {
         }
 
         distinctPredictionList = new ArrayList(map.values());
-        prediction_urls=new ArrayList<>();
+        prediction_urls = new ArrayList<>();
         Collections.sort(distinctPredictionList, Collections.reverseOrder());
 
         if (language.equals(LANGUAGE.RO)) {
@@ -264,11 +268,16 @@ public class RecordFragment extends Fragment {
                         int checkedRadioButtonId = radioGroup.getCheckedRadioButtonId();
                         switch (checkedRadioButtonId) {
                             case R.id.radioEnglish:
-                                saveSelectedLanguage("English");
+                                this.userDetails.setLanguage("English");
+                                System.out.println(this.userDetails);
+                                UserDetails.updateUserDetails(this.userDetails);
+                                saveSelectedLanguage(this.userDetails.getLanguage());
                                 PREDICTION_LANGUAGE = LANGUAGE.EN;
                                 break;
                             case R.id.radioRomanian:
-                                saveSelectedLanguage("Romanian");
+                                this.userDetails.setLanguage("Romanian");
+                                UserDetails.updateUserDetails(this.userDetails);
+                                saveSelectedLanguage(userDetails.getLanguage());
                                 PREDICTION_LANGUAGE = LANGUAGE.RO;
                                 break;
                         }
@@ -280,6 +289,9 @@ public class RecordFragment extends Fragment {
             return true;
         } else if (id == R.id.location) {
             useLocation = !useLocation;
+            Integer useLocInt = (useLocation) ? 1 : 0;
+            this.userDetails.setUse_location(useLocInt);
+            UserDetails.updateUserDetails(userDetails);
             item.setChecked(useLocation);
             saveSelectedOption(useLocation);
             return true;
@@ -300,6 +312,7 @@ public class RecordFragment extends Fragment {
 
     private void saveSelectedLanguage(String language) {
         Activity activity = getActivity();
+
         if (activity != null) {
             SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LANGUAGE, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
@@ -320,20 +333,22 @@ public class RecordFragment extends Fragment {
 
     private String getSavedLanguage() {
         Activity activity = getActivity();
+        System.out.println(userDetails.getLanguage());
         if (activity != null) {
             SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LANGUAGE, Context.MODE_PRIVATE);
-            return sharedPref.getString(KEY_SELECTED_LANGUAGE, "English"); // Default to English
+            return sharedPref.getString(KEY_SELECTED_LANGUAGE, userDetails.getLanguage()); // Default to English
         }
-        return "English"; // Default to English if getActivity() is null
+        return userDetails.getLanguage(); // Default to English if getActivity() is null
     }
 
     private boolean getSavedOption() {
         Activity activity = getActivity();
+        Boolean useLocation = this.userDetails.getUse_location() == 1;
         if (activity != null) {
             SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LOCATION, Context.MODE_PRIVATE);
-            return sharedPref.getBoolean(KEY_SELECTED_LOCATION, false); // Default to false
+            return sharedPref.getBoolean(KEY_SELECTED_LOCATION, useLocation); // Default to false
         }
-        return false; // Default to false if getActivity() is null
+        return useLocation; // Default to false if getActivity() is null
     }
 
 
@@ -414,6 +429,11 @@ public class RecordFragment extends Fragment {
             activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
+        if (userDetails != null) {
+            boolean useLocation = userDetails.getUse_location() == 1;
+            saveSelectedOption(useLocation);
+            saveSelectedLanguage(userDetails.getLanguage());
+        }
         String selectedPredictionLanguage = getSavedLanguage();
         if (selectedPredictionLanguage.equals("English"))
             PREDICTION_LANGUAGE = LANGUAGE.EN;
@@ -492,8 +512,8 @@ public class RecordFragment extends Fragment {
         // Read the file and encode it to Base64
         String base64EncodedString = encodeFileToBase64(recordingItem.getPath());
         // get the location and send it to service method in case of long press "predict" button
-        Double lat=0.0;
-        Double lon=0.0;
+        Double lat = 0.0;
+        Double lon = 0.0;
 
         if (base64EncodedString != null) {
             LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
@@ -506,7 +526,7 @@ public class RecordFragment extends Fragment {
                     lon = lastKnownLocation.getLongitude();
                 }
             }
-            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat),Optional.of(lon));
+            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon));
         }
     }
 

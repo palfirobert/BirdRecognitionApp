@@ -4,6 +4,7 @@ import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
+import com.example.birdrecognitionapp.models.UserDetails;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -72,7 +73,15 @@ public class LoginActivity extends AppCompatActivity {
                                         Toast.makeText(LoginActivity.this, loginResponse.getError(), Toast.LENGTH_SHORT).show();
                                     } else if (loginResponse.getMessage() != null) {
                                         Toast.makeText(LoginActivity.this, "Login Successfully!", Toast.LENGTH_SHORT).show();
+                                        // Populate the UserDetails object
+                                        UserDetails userDetails = new UserDetails(
+                                                loginResponse.getUser_id(),
+                                                loginResponse.getLanguage(),
+                                                loginResponse.getUse_location()
+                                        );
+                                        System.out.println(userDetails.toString());
                                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                                        intent.putExtra("userDetails", userDetails);
                                         startActivity(intent);
                                     }
                                 }

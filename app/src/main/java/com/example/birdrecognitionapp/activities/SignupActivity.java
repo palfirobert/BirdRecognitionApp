@@ -4,24 +4,16 @@ import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.dto.SignupReq;
 import com.example.birdrecognitionapp.dto.SignupResponse;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import retrofit2.Call;
@@ -59,6 +51,7 @@ public class SignupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
         ButterKnife.bind(this);
+
         signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -105,7 +98,6 @@ public class SignupActivity extends AppCompatActivity {
                                         Toast.makeText(SignupActivity.this, signupResponse.getError(), Toast.LENGTH_SHORT).show();
                                     } else if (signupResponse.getMessage() != null) {
                                         Toast.makeText(SignupActivity.this, "Signup Successfully!", Toast.LENGTH_SHORT).show();
-                                        // Redirect to LoginActivity upon successful signup
                                         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                                         startActivity(intent);
                                     }
@@ -120,6 +112,7 @@ public class SignupActivity extends AppCompatActivity {
                             Toast.makeText(SignupActivity.this, "Server error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
+
                 }
             }
         });
