@@ -13,12 +13,14 @@
             android:id="@+id/editObservationDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Observation Date (YYYY-MM-DD)"/>
+            android:enabled="false"
+            android:hint="Observation Date (YYYY-MM-DD)" />
 
         <EditText
             android:id="@+id/editSpecies"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:enabled="false"
             android:hint="Species"/>
 
         <EditText
@@ -32,18 +34,21 @@
             android:id="@+id/editObserver"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:enabled="false"
             android:hint="Observer"/>
 
         <EditText
             android:id="@+id/editUploadDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:enabled="false"
             android:hint="Upload Date (YYYY-MM-DD)"/>
 
         <EditText
             android:id="@+id/editLocation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:enabled="false"
             android:hint="Location"/>
 
     </LinearLayout>

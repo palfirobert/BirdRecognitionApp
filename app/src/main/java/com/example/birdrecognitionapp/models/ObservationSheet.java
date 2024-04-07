@@ -1,7 +1,7 @@
 package com.example.birdrecognitionapp.models;
 
 public class ObservationSheet {
-    String observationDate;
+    static String observationDate;
     String species;
     Integer number;
     String observer;
@@ -9,6 +9,7 @@ public class ObservationSheet {
     String location;
     String userId;
     String soundId;
+    static Boolean isCalledFromSavedRecordingAdapter;
 
     ObservationSheet(){}
 
@@ -23,16 +24,36 @@ public class ObservationSheet {
         this.soundId = soundId;
     }
 
-    public String getObservationDate() {
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId, Boolean isCalledFromSavedRecordingAdapter) {
+        this.observationDate = observationDate;
+        this.species = species;
+        this.number = number;
+        this.observer = observer;
+        this.uploadDate = uploadDate;
+        this.location = location;
+        this.userId = userId;
+        this.soundId = soundId;
+        this.isCalledFromSavedRecordingAdapter = isCalledFromSavedRecordingAdapter;
+    }
+
+    public static String getObservationDate() {
         return observationDate;
     }
 
-    public void setObservationDate(String observationDate) {
-        this.observationDate = observationDate;
+    public static void setObservationDate(String observationDate) {
+        ObservationSheet.observationDate = observationDate;
     }
 
     public String getSpecies() {
         return species;
+    }
+
+    public static Boolean getCalledFromSavedRecordingAdapter() {
+        return isCalledFromSavedRecordingAdapter;
+    }
+
+    public static void setCalledFromSavedRecordingAdapter(Boolean calledFromSavedRecordingAdapter) {
+        ObservationSheet.isCalledFromSavedRecordingAdapter = calledFromSavedRecordingAdapter;
     }
 
     public void setSpecies(String species) {

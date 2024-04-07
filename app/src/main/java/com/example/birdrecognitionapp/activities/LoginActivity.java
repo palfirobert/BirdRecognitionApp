@@ -4,6 +4,7 @@ import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
+import com.example.birdrecognitionapp.models.User;
 import com.example.birdrecognitionapp.models.UserDetails;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,6 +40,8 @@ public class LoginActivity extends AppCompatActivity {
 
     @BindView(R.id.signupRedirectText)
     TextView signupRedirectText;
+
+    User user;
 
 
     @Override
@@ -91,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
                                                 loginResponse.getLanguage(),
                                                 loginResponse.getUse_location()
                                         );
-                                        System.out.println(userDetails.toString());
+                                        user=new User(loginResponse.getUser_id(),loginResponse.getName(),loginResponse.getSurname(),loginResponse.getEmail(),loginResponse.getPassword());
                                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                                         intent.putExtra("userDetails", userDetails);
                                         startActivity(intent);

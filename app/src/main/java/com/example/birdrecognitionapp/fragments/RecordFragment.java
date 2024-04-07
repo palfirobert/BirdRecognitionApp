@@ -20,6 +20,7 @@ import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,6 +30,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.EditText;
+import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -44,12 +47,15 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.R;
+import com.example.birdrecognitionapp.adapters.SavedRecordingsAdapter;
 import com.example.birdrecognitionapp.database.BirdsDbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.enums.LANGUAGE;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.MainActivityRecordFragmentSharedModel;
+import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
+import com.example.birdrecognitionapp.models.User;
 import com.example.birdrecognitionapp.models.UserDetails;
 import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -58,9 +64,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +115,9 @@ public class RecordFragment extends Fragment {
 
     UserDetails userDetails = new UserDetails();
 
+    User user = new User();
+
+    ObservationSheet observationSheet;
 
     private static final String PREFS_LANGUAGE = "LanguagePrefs";
     private static final String KEY_SELECTED_LANGUAGE = "selected_language";
@@ -375,6 +388,14 @@ public class RecordFragment extends Fragment {
             }
         });
 
+        this.predictionButtonOne.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                showOptionsPopupMenu(view, predictionButtonOne.getText().toString());
+                return true;
+            }
+        });
+
 
         this.predictionButtonTwo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -409,6 +430,76 @@ public class RecordFragment extends Fragment {
             }
         });
         return recordView;
+    }
+
+    private void showOptionsPopupMenu(View view, String species) {
+        PopupMenu popup = new PopupMenu(getContext(), view);
+        // Inflate the menu from xml
+        popup.inflate(R.menu.observation_sheet_menu);
+        // Add click listener for menu items
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.menu_generate_observation_sheet:
+                        LayoutInflater inflater = LayoutInflater.from(getContext());
+                        View dialogView = inflater.inflate(R.layout.dialog_observation_sheet, null);
+
+                        EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
+                        // Format the current date and time
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                        String formattedDateTime = LocalDateTime.now().format(formatter);
+
+                        // Set the formatted date and time to your text field
+                        editUploadDate.setText(formattedDateTime);
+                        EditText editSpecies = dialogView.findViewById(R.id.editSpecies);
+                        editSpecies.setText(species.replaceAll("[0-9%]", ""));
+
+                        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+                        String locationProvider = LocationManager.GPS_PROVIDER;
+
+                        Double lat = 0.0;
+                        Double lon = 0.0;
+                        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+                            if (lastKnownLocation != null) {
+                                lat = lastKnownLocation.getLatitude();
+                                lon = lastKnownLocation.getLongitude();
+                            }
+                        }
+
+                        EditText editLocation = dialogView.findViewById(R.id.editLocation);
+                        editLocation.setText(lat + "," + lon);
+
+                        EditText editObserver = dialogView.findViewById(R.id.editObserver);
+                        editObserver.setText(user.getName() + " " + user.getSurname());
+
+                        EditText editObservationDate = dialogView.findViewById(R.id.editObservationDate);
+                        if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
+                            editObservationDate.setText(DateUtils.formatDateTime(getContext(), Long.valueOf(ObservationSheet.getObservationDate()),
+                                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
+                                            | DateUtils.FORMAT_SHOW_YEAR));
+                        } else
+                            editObservationDate.setText(LocalDateTime.now().getYear() + "-" + LocalDateTime.now().getMonth().getValue() + "-" + LocalDateTime.now().getDayOfMonth());
+
+                        // Create the AlertDialog for observation sheet
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        builder.setView(dialogView)
+                                .setTitle("Enter Observation Details")
+                                .setPositiveButton("Save", (dialog, which) -> {
+                                    //todo logic for observation sheet
+                                })
+                                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        });
+        popup.show();
     }
 
 
