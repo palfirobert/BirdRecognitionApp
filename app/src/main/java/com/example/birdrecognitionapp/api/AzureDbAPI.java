@@ -5,6 +5,7 @@ import com.example.birdrecognitionapp.dto.LoginResponse;
 import com.example.birdrecognitionapp.dto.SignupReq;
 import com.example.birdrecognitionapp.dto.SignupResponse;
 import com.example.birdrecognitionapp.dto.UserDetailsDto;
+import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.UserDetails;
 
 import retrofit2.Call;
@@ -21,4 +22,7 @@ public interface AzureDbAPI {
 
     @PUT("/updateuserdetails")
     Call<String> updateUserDetails(@Body UserDetailsDto userDetails);
+
+    @POST("/addsound")
+    Call<String>addSound(@Body RecordingItem recordingItem);
 }

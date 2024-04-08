@@ -25,6 +25,7 @@ import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.models.RecordingItem;
+import com.example.birdrecognitionapp.models.User;
 
 
 import java.io.File;
@@ -75,7 +76,7 @@ public class RecordingService extends Service {
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     private int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
     private boolean useLocation;
-
+    private User user=new User();
     private double lon, lat;
 
     @Override
@@ -239,8 +240,21 @@ public class RecordingService extends Service {
             // flag the recording activity that the recording stopped and to show la loading dialog
             Intent intent = new Intent("RECORDING_STOPPED");
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+            if(useLocation) {
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                String locationProvider = LocationManager.GPS_PROVIDER;
 
-            postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.empty(), Optional.empty());
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+                    if (lastKnownLocation != null) {
+                        lat = lastKnownLocation.getLatitude();
+                        lon = lastKnownLocation.getLongitude();
+                    }
+                }
+                postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.of(lat), Optional.of(lon),Optional.empty());
+            }else{
+                postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.empty(), Optional.empty(),Optional.empty());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -255,7 +269,7 @@ public class RecordingService extends Service {
             audioRecord.release();
             audioRecord = null;
             recordingThread = null;
-            RecordingItem recordingItem = new RecordingItem(fileName, filePath, elapsedTimeMillis, System.currentTimeMillis());
+            RecordingItem recordingItem = new RecordingItem(fileName, filePath, elapsedTimeMillis, System.currentTimeMillis(),user.getId(),"sounds/"+user.getId()+"/"+this.fileName);
             dbHelper.addRecording(recordingItem);
         }
 
@@ -263,7 +277,12 @@ public class RecordingService extends Service {
     }
 
 
-    public void postData(String soundInBase64, boolean useLocation, Optional<Double> latitude, Optional<Double> longitude) {
+    public void postData(String soundInBase64, boolean useLocation, Optional<Double> latitude, Optional<Double> longitude,Optional<Long>timestamp) {
+        if(timestamp.isPresent()) {
+            ts = timestamp.get().toString();
+            this.fileName = "audio" + ts + ".wav";
+        }
+
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
@@ -275,8 +294,14 @@ public class RecordingService extends Service {
                 .build();
 
         if (!useLocation) {// Create a Retrofit instance with the custom OkHttpClient
+
+            HashMap<String, Object> parameters = new HashMap<>();
+            parameters.put("sound_data", soundInBase64);
+            parameters.put("user_id", user.getId());
+            parameters.put("audio_name", this.fileName);
+
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                    .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                     .addConverterFactory(GsonConverterFactory.create())
                     .client(okHttpClient)  // Set the custom OkHttpClient
                     .build();
@@ -285,7 +310,7 @@ public class RecordingService extends Service {
             RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
             // Create a Call object for the API request
-            Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithoutLocation(soundInBase64);
+            Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithoutLocation(parameters);
 
             // Enqueue the API call
             call.enqueue(new Callback<List<SoundPredictionResponse>>() {
@@ -308,7 +333,7 @@ public class RecordingService extends Service {
                     if (retryCount < MAX_RETRIES) {
                         retryCount++;
                         System.out.println("Retrying... Attempt: " + retryCount);
-                        postData(soundInBase64, useLocation, Optional.empty(), Optional.empty()); // Retry the call
+                        postData(soundInBase64, useLocation, Optional.empty(), Optional.empty(),Optional.empty()); // Retry the call
                     } else {
                         // Handle the failure after exceeding retry count
                         t.printStackTrace();
@@ -321,12 +346,14 @@ public class RecordingService extends Service {
                 this.lat=latitude.get();
                 this.lon=longitude.get();
                 HashMap<String, Object> parameters = new HashMap<>();
+                parameters.put("user_id", user.getId());
+                parameters.put("audio_name", this.fileName);
                 parameters.put("sound_data", soundInBase64);
                 parameters.put("lon", lon);
                 parameters.put("lat", lat);
 
                 Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                        .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                         .addConverterFactory(GsonConverterFactory.create())
                         .client(okHttpClient)  // Set the custom OkHttpClient
                         .build();
@@ -358,7 +385,7 @@ public class RecordingService extends Service {
                         if (retryCount < MAX_RETRIES) {
                             retryCount++;
                             System.out.println("Retrying... Attempt: " + retryCount);
-                            postData(soundInBase64, useLocation, latitude, longitude); // Retry the call
+                            postData(soundInBase64, useLocation, latitude, longitude,Optional.empty()); // Retry the call
                         } else {
                             // Handle the failure after exceeding retry count
                             t.printStackTrace();

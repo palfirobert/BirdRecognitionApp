@@ -12,7 +12,7 @@ import retrofit2.http.POST;
 public interface RetrofitAPI {
 
     @POST("/")
-    Call<List<SoundPredictionResponse>> sendDataForPredictionWithoutLocation(@Body String soundInBase64);
+    Call<List<SoundPredictionResponse>> sendDataForPredictionWithoutLocation(@Body HashMap<String, Object> parameters);
 
     @POST("/predictionwithlocation")
     Call<List<SoundPredictionResponse>> sendDataForPredictionWithLocation(@Body HashMap<String, Object> parameters);

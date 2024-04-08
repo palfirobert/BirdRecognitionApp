@@ -617,7 +617,7 @@ public class RecordFragment extends Fragment {
                     lon = lastKnownLocation.getLongitude();
                 }
             }
-            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon));
+            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon),Optional.of(recordingItem.getTime_added()));
         }
     }
 

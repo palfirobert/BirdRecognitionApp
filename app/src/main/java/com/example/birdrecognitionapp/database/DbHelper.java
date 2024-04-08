@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
 
+import com.example.birdrecognitionapp.api.AzureDbAPI;
+import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
@@ -15,6 +17,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DbHelper extends SQLiteOpenHelper {
     private Context context;
@@ -61,6 +70,7 @@ public class DbHelper extends SQLiteOpenHelper {
             db.insert(TABLE_NAME, null, contentValues);
             if (onDatabaseChangedListener != null)
                 onDatabaseChangedListener.onNewDatabaseEntryAdded(recordingItem);
+            addSoundToDb(recordingItem);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -193,6 +203,44 @@ public class DbHelper extends SQLiteOpenHelper {
         if (!executorService.isShutdown()) {
             executorService.shutdown();
         }
+    }
+    public void addSoundToDb(RecordingItem recordingItem)
+    {
+
+        // Build the Retrofit instance
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        // Create an instance of the RetrofitAPI interface
+        AzureDbAPI retrofitAPI = retrofit.create(AzureDbAPI.class);
+
+        // Create a Call object for the API request
+        Call<String> call = retrofitAPI.addSound(recordingItem);
+
+        // Enqueue the call
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                // Handle success
+                if (response.isSuccessful()) {
+                    // Extract the response body
+                    String responseBody = response.body();
+                    System.out.println("Response from /addsound: " + responseBody);
+                } else {
+                    // Handle request errors depending on response codes
+                    System.out.println("Request error code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                // Handle failure to execute the call
+                t.printStackTrace();
+            }
+        });
+
     }
 
 }
