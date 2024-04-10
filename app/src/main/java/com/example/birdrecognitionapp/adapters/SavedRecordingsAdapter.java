@@ -21,10 +21,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.dto.DeleteSoundDto;
 import com.example.birdrecognitionapp.fragments.AudioPlayerFragment;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
+import com.example.birdrecognitionapp.models.User;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +40,7 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
     ArrayList<RecordingItem> list;
     LinearLayoutManager linearLayoutManager;
     DbHelper dbHelper;
+    User user=new User();
 
     public interface OnPredictButtonPressListener {
         void switchToFirstTab(RecordingItem recordingItem);
@@ -151,6 +154,7 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
                         case R.id.menu_delete:
                             RecordingItem itemToDelete = list.get(getAdapterPosition());
                             dbHelper.deleteRecording(itemToDelete.getPath());
+                            dbHelper.deleteSoundFromBlob(new DeleteSoundDto(user.getId(),user.getId()+"/"+itemToDelete.getName()));
                             list.remove(getAdapterPosition());
                             notifyItemRemoved(getAdapterPosition());
                             Toast.makeText(context, "Deleted " + itemToDelete.getName(), Toast.LENGTH_SHORT).show();

@@ -7,18 +7,31 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
+import android.util.Log;
 
 import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
+import com.example.birdrecognitionapp.dto.DeleteSoundDto;
+import com.example.birdrecognitionapp.dto.GetUserSoundsDto;
+import com.example.birdrecognitionapp.dto.SoundResponse;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.RecordingItem;
+import com.example.birdrecognitionapp.models.User;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -34,16 +47,22 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String COLUMN_PATH = "path";
     public static final String COLUMN_LENGTH = "length";
     public static final String COLUMN_TIME_ADDED = "time_added";
+    public static final String COLUMN_USER_ID = "user_id";
+    public static final String COLUMN_BLOB_REFERENCE = "blob_reference";
     public static final String COMA_SEP = ",";
-    public static final String SQLITE_CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + "id INTEGER PRIMARY KEY" +
-            " AUTOINCREMENT" + COMA_SEP +
+    public static final String SQLITE_CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" +
+            "id INTEGER PRIMARY KEY AUTOINCREMENT" + COMA_SEP +
             COLUMN_NAME + " TEXT" + COMA_SEP +
             COLUMN_PATH + " TEXT" + COMA_SEP +
             COLUMN_LENGTH + " INTEGER" + COMA_SEP +
-            COLUMN_TIME_ADDED + " INTEGER " + ")";
+            COLUMN_TIME_ADDED + " INTEGER" + COMA_SEP +
+            COLUMN_USER_ID + " TEXT" + COMA_SEP +
+            COLUMN_BLOB_REFERENCE + " TEXT" + ")";
     private static OnDatabaseChangedListener onDatabaseChangedListener;
+    private boolean firstLogin=true;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
+    User user=new User();
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -67,10 +86,11 @@ public class DbHelper extends SQLiteOpenHelper {
             contentValues.put(COLUMN_PATH, recordingItem.getPath());
             contentValues.put(COLUMN_LENGTH, recordingItem.getLength());
             contentValues.put(COLUMN_TIME_ADDED, recordingItem.getTime_added());
+            contentValues.put(COLUMN_USER_ID, recordingItem.getUser_id());
+            contentValues.put(COLUMN_BLOB_REFERENCE, recordingItem.getBlob_reference());
             db.insert(TABLE_NAME, null, contentValues);
             if (onDatabaseChangedListener != null)
                 onDatabaseChangedListener.onNewDatabaseEntryAdded(recordingItem);
-            addSoundToDb(recordingItem);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -85,11 +105,13 @@ public class DbHelper extends SQLiteOpenHelper {
         int deletedRows = db.delete(TABLE_NAME, COLUMN_PATH + " = ?", new String[]{path});
         if (deletedRows > 0) {
             File file = new File(path);
-            if (file.exists())
-                file.delete(); // Delete the file
+            if (file.exists()) {
+                file.delete();
+            }
             if (onDatabaseChangedListener != null) {
                 onDatabaseChangedListener.onDatabaseEntryDeleted();
             }
+
         }
     }
 
@@ -186,11 +208,11 @@ public class DbHelper extends SQLiteOpenHelper {
             retriever.setDataSource(file.getAbsolutePath());
             String durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             long length = Long.parseLong(durationStr); // Duration in milliseconds
-
+            String blobReference=user.getId()+"/"+file.getName();
             long timeAdded = file.lastModified(); // Use file's last modified time as time added
             String absolutePath = filePath + file.getName();
             // Now you have the length in milliseconds, proceed to add the recording
-            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded);
+            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded,user.getId(),blobReference);
             addRecording(newRecording);
         } catch (Exception e) {
             e.printStackTrace();
@@ -242,5 +264,128 @@ public class DbHelper extends SQLiteOpenHelper {
         });
 
     }
+    public void fetchAndPopulateUserSounds(String userId) {
+        if(firstLogin) {
+
+            downloadUserSounds(new GetUserSoundsDto(userId));
+            firstLogin=false;
+        }
+    }
+    public void downloadUserSounds(GetUserSoundsDto userSoundsDto){
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        AzureDbAPI service = retrofit.create(AzureDbAPI.class);
+        Call<ResponseBody> call = service.downloadUserSounds(userSoundsDto);
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // Write the ZIP file to storage, then unzip it
+                    try {
+                        // Create a temporary file for the ZIP
+                        File zipFile = File.createTempFile("sounds", ".zip", context.getExternalFilesDir(null));
+                        try (FileOutputStream fos = new FileOutputStream(zipFile)) {
+                            fos.write(response.body().bytes());
+                        }
+
+                        // Unzip the file to the desired directory
+                        unzip(zipFile.getPath(), filePath);
+
+                        // Optionally, delete the ZIP file after extraction
+                        zipFile.delete();
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.e("DownloadError", "Server contacted but unable to retrieve content");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+    }
+    public void unzip(String zipFilePath, String destinationDirectory) throws IOException {
+        File destDir = new File(destinationDirectory);
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath))) {
+            ZipEntry entry = zipIn.getNextEntry();
+            while (entry != null) {
+                String filePath = destinationDirectory + File.separator + entry.getName();
+                if (!entry.isDirectory()) {
+                    // If the entry is a file, extracts it
+                    extractFile(zipIn, filePath);
+                } else {
+                    // If the entry is a directory, make the directory
+                    File dir = new File(filePath);
+                    dir.mkdirs();
+                }
+                zipIn.closeEntry();
+                entry = zipIn.getNextEntry();
+            }
+        }
+    }
+
+    private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
+        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
+            byte[] bytesIn = new byte[4096];
+            int read = 0;
+            while ((read = zipIn.read(bytesIn)) != -1) {
+                bos.write(bytesIn, 0, read);
+            }
+        }
+    }
+    public void clearDirectory(File dir) {
+        if (dir.exists() && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    deleteRecording("/storage/emulated/0/soundrecordings/"+file.getName());
+                }
+            }
+        }
+    }
+
+    public void deleteSoundFromBlob(DeleteSoundDto soundDto)
+    {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual URL
+                .addConverterFactory(GsonConverterFactory.create()) // Assuming you're using Gson
+                .build();
+
+        AzureDbAPI apiInterface = retrofit.create(AzureDbAPI.class);
+
+        Call<String> call = apiInterface.deleteSound(soundDto);
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                if (response.isSuccessful()) {
+                    // Handle success
+                    String responseBody = response.body();
+                    System.out.println("Response: " + responseBody);
+                } else {
+                    // Handle request errors depending on status code
+                    System.out.println("Error: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                // Handle failure, e.g., network error, parsing error
+                t.printStackTrace();
+            }
+        });
+
+    }
+
 
 }

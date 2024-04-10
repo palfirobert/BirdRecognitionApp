@@ -57,7 +57,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RecordingService extends Service {
-
+    // todo: este facut pana acuma enbdpointul care ia soundsurile dupa un user, trebuie luate datele din db din sounds si populata baza de date din dbhelper, la fiecare sync de sunete trebuie sterse toate sunetele din internal storage si bagate cele downloadate.
 
     long startingTimeMillis = 0;
     long elapsedTimeMillis = 0;
@@ -271,6 +271,7 @@ public class RecordingService extends Service {
             recordingThread = null;
             RecordingItem recordingItem = new RecordingItem(fileName, filePath, elapsedTimeMillis, System.currentTimeMillis(),user.getId(),"sounds/"+user.getId()+"/"+this.fileName);
             dbHelper.addRecording(recordingItem);
+            dbHelper.addSoundToDb(recordingItem);
         }
 
         // Toast.makeText(getApplicationContext(), "Recording saved " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();

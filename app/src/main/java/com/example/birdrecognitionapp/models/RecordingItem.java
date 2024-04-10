@@ -76,4 +76,16 @@ public class RecordingItem implements Serializable {
     public void setTime_added(long time_added) {
         this.time_added = time_added;
     }
+
+    @Override
+    public String toString() {
+        return "RecordingItem{" +
+                "name='" + name + '\'' +
+                ", path='" + path + '\'' +
+                ", length=" + length +
+                ", time_added=" + time_added +
+                ", user_id='" + user_id + '\'' +
+                ", blob_reference='" + blob_reference + '\'' +
+                '}';
+    }
 }

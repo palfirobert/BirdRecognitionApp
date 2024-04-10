@@ -47,8 +47,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.birdrecognitionapp.R;
-import com.example.birdrecognitionapp.adapters.SavedRecordingsAdapter;
 import com.example.birdrecognitionapp.database.BirdsDbHelper;
+import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.enums.LANGUAGE;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
@@ -61,16 +61,15 @@ import com.example.birdrecognitionapp.services.RecordingService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +111,7 @@ public class RecordFragment extends Fragment {
     MainActivityRecordFragmentSharedModel sharedModel;
 
     BirdsDbHelper dbHelper;
+    DbHelper mysqlDbHelper;
 
     UserDetails userDetails = new UserDetails();
 
@@ -507,6 +507,7 @@ public class RecordFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         dbHelper = new BirdsDbHelper(getContext());
+        mysqlDbHelper = new DbHelper(getContext());
         // Register to receive broadcasts from the service
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(receiver,
                 new IntentFilter("send-predictions-to-record-fragment"));
@@ -538,6 +539,8 @@ public class RecordFragment extends Fragment {
         } else {
             useLocation = false;
         }
+        mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
+        mysqlDbHelper.fetchAndPopulateUserSounds(user.getId());
 
 
     }
@@ -617,7 +620,7 @@ public class RecordFragment extends Fragment {
                     lon = lastKnownLocation.getLongitude();
                 }
             }
-            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon),Optional.of(recordingItem.getTime_added()));
+            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon), Optional.of(recordingItem.getTime_added()));
         }
     }
 
