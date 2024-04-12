@@ -176,6 +176,9 @@ public class RecordFragment extends Fragment {
             distinctPredictionList.stream().forEach(prediction ->
                     prediction_urls.add(dbHelper.getUrlByLatinName(prediction.getScientific_name())));
             System.out.println(prediction_urls);
+        }else{
+            distinctPredictionList.stream().forEach(prediction ->
+                    prediction_urls.add(null));
         }
 
         if (distinctPredictionList.size() != 0)
@@ -620,7 +623,7 @@ public class RecordFragment extends Fragment {
                     lon = lastKnownLocation.getLongitude();
                 }
             }
-            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon), Optional.of(recordingItem.getTime_added()));
+            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon), Optional.of(recordingItem.getTime_added()),false);
         }
     }
 

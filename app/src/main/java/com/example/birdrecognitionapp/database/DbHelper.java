@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -202,7 +203,7 @@ public class DbHelper extends SQLiteOpenHelper {
         db.delete(TABLE_NAME, COLUMN_PATH + " = ?", new String[]{path});
     }
 
-    private void addRecordingForNewFile(File file) {
+    private void addRecordingForNewFile(File file) { //todo trb schimbat sa ia datele din baza de date
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
             retriever.setDataSource(file.getAbsolutePath());
@@ -231,7 +232,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // Build the Retrofit instance
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -272,9 +273,20 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
     public void downloadUserSounds(GetUserSoundsDto userSoundsDto){
+        // Set your desired timeout in seconds
+        int timeoutInSeconds = 30;
+
+        // Create an OkHttpClient with the desired timeout
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
                 .build();
         AzureDbAPI service = retrofit.create(AzureDbAPI.class);
         Call<ResponseBody> call = service.downloadUserSounds(userSoundsDto);
@@ -358,7 +370,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void deleteSoundFromBlob(DeleteSoundDto soundDto)
     {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual URL
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual URL
                 .addConverterFactory(GsonConverterFactory.create()) // Assuming you're using Gson
                 .build();
 

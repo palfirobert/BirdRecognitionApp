@@ -104,6 +104,9 @@ public class AudioPlayerFragment extends DialogFragment {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(seekBar.getProgress());
+                    if (isPlaying) {
+                        mediaPlayer.start();
+                    }
                 }
             }
         });
@@ -119,9 +122,9 @@ public class AudioPlayerFragment extends DialogFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        try{
+        try {
             stopPlaying();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
 
@@ -131,8 +134,7 @@ public class AudioPlayerFragment extends DialogFragment {
         if (!isPlaying) {
             if (mediaPlayer == null) {
                 startPlaying();
-            }else
-            {
+            } else {
                 resumePlaying();
             }
         } else {
@@ -169,6 +171,10 @@ public class AudioPlayerFragment extends DialogFragment {
                 int duration = mediaPlayer.getDuration(); // Get the duration in milliseconds
                 String formattedDuration = formatDuration(duration); // Format the duration
                 fileLengthTextView.setText(formattedDuration);
+                int progress = seekBar.getProgress();
+                if (progress > 0 && progress < mediaPlayer.getDuration()) {
+                    mediaPlayer.seekTo(progress);
+                }
                 mediaPlayer.start();
             }
         });
@@ -176,11 +182,12 @@ public class AudioPlayerFragment extends DialogFragment {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
                 pausePlaying();
-                if(seekBar.getProgress()==seekBar.getMax())
-                {
-                    isPlaying=false;
-
-                }
+                seekBar.setProgress(seekBar.getMax());
+                fileCurrentProgress.setText(fileLengthTextView.getText());
+                mediaPlayer.seekTo(0);
+                seekBar.setProgress(0);
+                floatingActionButton.setImageResource(R.drawable.ic_media_play);
+                isPlaying = false;
             }
         });
         updateSeekBar();
@@ -272,7 +279,16 @@ public class AudioPlayerFragment extends DialogFragment {
     };
 
     private void updateSeekBar() {
-        handler.postDelayed(mRunnable, 1000);
+        if (mediaPlayer != null) {
+            int currentPos = mediaPlayer.getCurrentPosition();
+            seekBar.setProgress(currentPos);
+
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(currentPos);
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(currentPos) - TimeUnit.MINUTES.toSeconds(minutes);
+
+            fileCurrentProgress.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+        }
+        handler.postDelayed(mRunnable, 50); // Update interval changed to 50 milliseconds
     }
 
     @Override
@@ -282,8 +298,10 @@ public class AudioPlayerFragment extends DialogFragment {
         minutes = TimeUnit.MILLISECONDS.toMinutes(item.getLength());
         seconds = TimeUnit.NANOSECONDS.toSeconds(item.getLength()) - TimeUnit.MINUTES.toSeconds(minutes);
     }
+
     /**
      * Formats a duration from milliseconds into a readable string (MM:SS).
+     *
      * @param durationInMillis Duration in milliseconds.
      * @return Formatted duration string.
      */

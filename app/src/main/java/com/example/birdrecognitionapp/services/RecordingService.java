@@ -251,9 +251,9 @@ public class RecordingService extends Service {
                         lon = lastKnownLocation.getLongitude();
                     }
                 }
-                postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.of(lat), Optional.of(lon),Optional.empty());
+                postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.of(lat), Optional.of(lon),Optional.empty(),true);
             }else{
-                postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.empty(), Optional.empty(),Optional.empty());
+                postData(Base64.getEncoder().encodeToString(fileContent), useLocation, Optional.empty(), Optional.empty(),Optional.empty(),true);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -278,7 +278,7 @@ public class RecordingService extends Service {
     }
 
 
-    public void postData(String soundInBase64, boolean useLocation, Optional<Double> latitude, Optional<Double> longitude,Optional<Long>timestamp) {
+    public void postData(String soundInBase64, boolean useLocation, Optional<Double> latitude, Optional<Double> longitude,Optional<Long>timestamp,Boolean newRecording) {
         if(timestamp.isPresent()) {
             ts = timestamp.get().toString();
             this.fileName = "audio" + ts + ".wav";
@@ -300,6 +300,7 @@ public class RecordingService extends Service {
             parameters.put("sound_data", soundInBase64);
             parameters.put("user_id", user.getId());
             parameters.put("audio_name", this.fileName);
+            parameters.put("is_new_recording",newRecording);
 
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
@@ -334,7 +335,7 @@ public class RecordingService extends Service {
                     if (retryCount < MAX_RETRIES) {
                         retryCount++;
                         System.out.println("Retrying... Attempt: " + retryCount);
-                        postData(soundInBase64, useLocation, Optional.empty(), Optional.empty(),Optional.empty()); // Retry the call
+                        postData(soundInBase64, useLocation, Optional.empty(), Optional.empty(),Optional.empty(),newRecording); // Retry the call
                     } else {
                         // Handle the failure after exceeding retry count
                         t.printStackTrace();
@@ -352,6 +353,7 @@ public class RecordingService extends Service {
                 parameters.put("sound_data", soundInBase64);
                 parameters.put("lon", lon);
                 parameters.put("lat", lat);
+                parameters.put("is_new_recording",newRecording);
 
                 Retrofit retrofit = new Retrofit.Builder()
                         .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
@@ -386,7 +388,7 @@ public class RecordingService extends Service {
                         if (retryCount < MAX_RETRIES) {
                             retryCount++;
                             System.out.println("Retrying... Attempt: " + retryCount);
-                            postData(soundInBase64, useLocation, latitude, longitude,Optional.empty()); // Retry the call
+                            postData(soundInBase64, useLocation, latitude, longitude,Optional.empty(),newRecording); // Retry the call
                         } else {
                             // Handle the failure after exceeding retry count
                             t.printStackTrace();
