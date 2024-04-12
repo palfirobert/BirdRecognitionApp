@@ -24,7 +24,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +66,7 @@ public class DbHelper extends SQLiteOpenHelper {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
     User user=new User();
+    Map<String, Long> creationDateOfSounds=new HashMap<>();
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -203,14 +206,21 @@ public class DbHelper extends SQLiteOpenHelper {
         db.delete(TABLE_NAME, COLUMN_PATH + " = ?", new String[]{path});
     }
 
-    private void addRecordingForNewFile(File file) { //todo trb schimbat sa ia datele din baza de date
+    private void addRecordingForNewFile(File file) {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
             retriever.setDataSource(file.getAbsolutePath());
             String durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             long length = Long.parseLong(durationStr); // Duration in milliseconds
             String blobReference=user.getId()+"/"+file.getName();
-            long timeAdded = file.lastModified(); // Use file's last modified time as time added
+            long timeAdded;
+            System.out.println(file.getName());
+            System.out.println(creationDateOfSounds);
+            if(creationDateOfSounds.get(file.getName())!=null) {
+                timeAdded = creationDateOfSounds.get(file.getName());
+            }
+            else
+                timeAdded=file.lastModified();
             String absolutePath = filePath + file.getName();
             // Now you have the length in milliseconds, proceed to add the recording
             RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded,user.getId(),blobReference);
@@ -267,7 +277,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
     public void fetchAndPopulateUserSounds(String userId) {
         if(firstLogin) {
-
+            getCreationDateOfSounds();
             downloadUserSounds(new GetUserSoundsDto(userId));
             firstLogin=false;
         }
@@ -394,6 +404,48 @@ public class DbHelper extends SQLiteOpenHelper {
             public void onFailure(Call<String> call, Throwable t) {
                 // Handle failure, e.g., network error, parsing error
                 t.printStackTrace();
+            }
+        });
+
+    }
+
+    private void getCreationDateOfSounds(){
+        // Set your desired timeout in seconds
+        int timeoutInSeconds = 30;
+
+        // Create an OkHttpClient with the desired timeout
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual base URL
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+        AzureDbAPI service = retrofit.create(AzureDbAPI.class);
+
+        // Assuming you have a GetUserSoundsDto instance named userSoundsDto
+        Call<Map<String, Long>> call = service.getCreationDateOfSounds(user.getId());
+
+        call.enqueue(new Callback<Map<String, Long>>() {
+            @Override
+            public void onResponse(Call<Map<String, Long>> call, Response<Map<String, Long>> response) {
+                if (response.isSuccessful()) {
+                    // Here you have your hashmap with sound name as key and timestamp as value
+                    creationDateOfSounds= response.body();
+
+
+                } else {
+                    Log.e("APIError", "Server contacted but unable to retrieve content");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Long>> call, Throwable t) {
+                Log.e("APIError", "Network error", t);
             }
         });
 

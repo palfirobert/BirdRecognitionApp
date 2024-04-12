@@ -11,7 +11,9 @@ import com.example.birdrecognitionapp.dto.UserDetailsDto;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.UserDetails;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -22,6 +24,7 @@ import retrofit2.http.HTTP;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface AzureDbAPI {
     @POST("/login")
@@ -41,4 +44,7 @@ public interface AzureDbAPI {
 
     @HTTP(method = "DELETE", path = "deletesound", hasBody = true)
     Call<String> deleteSound(@Body DeleteSoundDto soundDto);
+
+    @GET("getcreationdate")
+    Call<Map<String, Long>> getCreationDateOfSounds(@Query("user_id") String userId);
 }
