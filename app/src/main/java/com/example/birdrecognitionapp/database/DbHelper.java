@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +68,7 @@ public class DbHelper extends SQLiteOpenHelper {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
     User user=new User();
-    Map<String, Long> creationDateOfSounds=new HashMap<>();
+    static Map<String, Long> creationDateOfSounds=new HashMap<>();
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -216,8 +218,9 @@ public class DbHelper extends SQLiteOpenHelper {
             long timeAdded;
             System.out.println(file.getName());
             System.out.println(creationDateOfSounds);
+            System.out.println(creationDateOfSounds.get(file.getName()));
             if(creationDateOfSounds.get(file.getName())!=null) {
-                timeAdded = creationDateOfSounds.get(file.getName());
+                timeAdded = creationDateOfSounds.get(file.getName())*1000;
             }
             else
                 timeAdded=file.lastModified();
@@ -278,7 +281,6 @@ public class DbHelper extends SQLiteOpenHelper {
     public void fetchAndPopulateUserSounds(String userId) {
         if(firstLogin) {
             getCreationDateOfSounds();
-            downloadUserSounds(new GetUserSoundsDto(userId));
             firstLogin=false;
         }
     }
@@ -319,11 +321,14 @@ public class DbHelper extends SQLiteOpenHelper {
                         // Optionally, delete the ZIP file after extraction
                         zipFile.delete();
 
+                        Toast.makeText(context, "Successfully fetched sounds!", Toast.LENGTH_SHORT).show();
+                        System.out.println("++++++++++++++++++++++++++++++++++++");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 } else {
                     Log.e("DownloadError", "Server contacted but unable to retrieve content");
+                    Toast.makeText(context, "You don't have any sounds..", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -380,7 +385,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void deleteSoundFromBlob(DeleteSoundDto soundDto)
     {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual URL
+                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual URL
                 .addConverterFactory(GsonConverterFactory.create()) // Assuming you're using Gson
                 .build();
 
@@ -421,7 +426,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual base URL
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual base URL
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
                 .build();
@@ -436,7 +441,8 @@ public class DbHelper extends SQLiteOpenHelper {
                 if (response.isSuccessful()) {
                     // Here you have your hashmap with sound name as key and timestamp as value
                     creationDateOfSounds= response.body();
-
+                    System.out.println("-----------------------------");
+                    downloadUserSounds(new GetUserSoundsDto(user.getId()));
 
                 } else {
                     Log.e("APIError", "Server contacted but unable to retrieve content");

@@ -303,7 +303,7 @@ public class RecordingService extends Service {
             parameters.put("is_new_recording",newRecording);
 
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                    .baseUrl("http:palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                     .addConverterFactory(GsonConverterFactory.create())
                     .client(okHttpClient)  // Set the custom OkHttpClient
                     .build();
@@ -356,7 +356,7 @@ public class RecordingService extends Service {
                 parameters.put("is_new_recording",newRecording);
 
                 Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                        .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                         .addConverterFactory(GsonConverterFactory.create())
                         .client(okHttpClient)  // Set the custom OkHttpClient
                         .build();
