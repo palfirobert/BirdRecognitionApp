@@ -385,7 +385,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void deleteSoundFromBlob(DeleteSoundDto soundDto)
     {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual URL
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual URL
                 .addConverterFactory(GsonConverterFactory.create()) // Assuming you're using Gson
                 .build();
 
