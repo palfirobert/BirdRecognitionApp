@@ -1,6 +1,10 @@
 package com.example.birdrecognitionapp.models;
 
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+
 public class User {
     private static String id;
     private static String name;
