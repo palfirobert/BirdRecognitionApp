@@ -530,6 +530,8 @@ public class RecordFragment extends Fragment {
         }
 
         if (userDetails.getUse_location() != null) {
+            mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
+            mysqlDbHelper.fetchAndPopulateUserSounds(user.getId());
             boolean useLocation = userDetails.getUse_location() == 1;
             saveSelectedOption(useLocation);
             saveSelectedLanguage(userDetails.getLanguage());
@@ -537,6 +539,7 @@ public class RecordFragment extends Fragment {
             SessionManagerService sessionManager = new SessionManagerService(getContext());
             userDetails = new UserDetails(sessionManager.getUserId(), sessionManager.getLanguage(), sessionManager.getUseLocation());
             boolean useLocation = userDetails.getUse_location() == 1;
+            DbHelper.firstLogin=false;
             saveSelectedOption(useLocation);
             saveSelectedLanguage(userDetails.getLanguage());
         }
@@ -553,9 +556,6 @@ public class RecordFragment extends Fragment {
         } else {
             useLocation = false;
         }
-//        mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
-
-//        mysqlDbHelper.fetchAndPopulateUserSounds(user.getId());
 
 
     }

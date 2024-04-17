@@ -66,7 +66,7 @@ public class DbHelper extends SQLiteOpenHelper {
             COLUMN_USER_ID + " TEXT" + COMA_SEP +
             COLUMN_BLOB_REFERENCE + " TEXT" + ")";
     private static OnDatabaseChangedListener onDatabaseChangedListener;
-    private boolean firstLogin=true;
+    public static boolean firstLogin=true;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
     User user=new User();
@@ -284,6 +284,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
     public void fetchAndPopulateUserSounds(String userId) {
         if(firstLogin) {
+            loadingDialogBar.showDialog("Fetching sounds...");
             getCreationDateOfSounds();
             firstLogin=false;
         }
@@ -327,6 +328,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
                         Toast.makeText(context, "Successfully fetched sounds!", Toast.LENGTH_SHORT).show();
                         System.out.println("++++++++++++++++++++++++++++++++++++");
+                        loadingDialogBar.hideDialog();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

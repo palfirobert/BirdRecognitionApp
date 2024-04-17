@@ -121,8 +121,7 @@ public class LoginActivity extends AppCompatActivity {
                                         sessionManager.setPassword(user.getPassword());
                                         sessionManager.setName(user.getName());
                                         dialogBar.hideDialog();
-                                        dbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
-                                        dbHelper.fetchAndPopulateUserSounds(user.getId());
+                                        DbHelper.firstLogin=true;
                                         startActivity(intent);
                                     }
                                 }
