@@ -329,7 +329,8 @@ public class RecordFragment extends Fragment {
 
     private void saveSelectedLanguage(String language) {
         Activity activity = getActivity();
-
+        SessionManagerService sessionManager = new SessionManagerService(getContext());
+        sessionManager.setLanguage(language);
         if (activity != null) {
             SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LANGUAGE, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
@@ -340,6 +341,9 @@ public class RecordFragment extends Fragment {
 
     private void saveSelectedOption(boolean option) {
         Activity activity = getActivity();
+        SessionManagerService sessionManager = new SessionManagerService(getContext());
+        int optionIntValue=option ? 1:0;
+        sessionManager.setUseLocation(optionIntValue);
         if (activity != null) {
             SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LOCATION, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
@@ -549,8 +553,9 @@ public class RecordFragment extends Fragment {
         } else {
             useLocation = false;
         }
-        mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
-        mysqlDbHelper.fetchAndPopulateUserSounds(user.getId()); //todo muta asta de aici ca nu e bine.
+//        mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
+
+//        mysqlDbHelper.fetchAndPopulateUserSounds(user.getId());
 
 
     }

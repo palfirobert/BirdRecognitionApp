@@ -2,6 +2,7 @@ package com.example.birdrecognitionapp.activities;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.api.AzureDbAPI;
+import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
 import com.example.birdrecognitionapp.models.User;
@@ -12,12 +13,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -44,11 +47,14 @@ public class LoginActivity extends AppCompatActivity {
 
     User user;
 
+    DbHelper dbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+        dbHelper = new DbHelper(getApplicationContext());
         SessionManagerService sessionManager = new SessionManagerService(this);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,7 +102,10 @@ public class LoginActivity extends AppCompatActivity {
                                                 loginResponse.getUse_location()
                                         );
                                         user=new User(loginResponse.getUser_id(),loginResponse.getName(),loginResponse.getSurname(),loginResponse.getEmail(),loginResponse.getPassword());
+
                                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                                        System.out.println(userDetails.getUse_location());
+                                        System.out.println(userDetails.getLanguage());
                                         sessionManager.setLogin(true);
                                         sessionManager.setUseLocation(userDetails.getUse_location());
                                         sessionManager.setLanguage(userDetails.getLanguage());
@@ -105,6 +114,9 @@ public class LoginActivity extends AppCompatActivity {
                                         sessionManager.setEmail(user.getEmail());
                                         sessionManager.setPassword(user.getPassword());
                                         sessionManager.setName(user.getName());
+
+                                        dbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
+                                        dbHelper.fetchAndPopulateUserSounds(user.getId());
                                         startActivity(intent);
                                     }
                                 }
