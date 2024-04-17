@@ -20,7 +20,6 @@ public class LoadingDialogBar {
         this.dialog=new Dialog(context);
         this.dialog.setContentView(R.layout.dialog);
         this.dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-
         TextView titleTextView=dialog.findViewById(R.id.textView);
         titleTextView.setText(title);
         dialog.create();

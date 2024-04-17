@@ -5,6 +5,7 @@ import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
+import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.User;
 import com.example.birdrecognitionapp.models.UserDetails;
 import com.example.birdrecognitionapp.services.SessionManagerService;
@@ -49,16 +50,21 @@ public class LoginActivity extends AppCompatActivity {
 
     DbHelper dbHelper;
 
+    LoadingDialogBar dialogBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+        dialogBar=new LoadingDialogBar(this);
         dbHelper = new DbHelper(getApplicationContext());
         SessionManagerService sessionManager = new SessionManagerService(this);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                dialogBar.showDialog("Logging in...");
                 String email = loginEmail.getText().toString();
                 String password = loginPassword.getText().toString();
                 if (email.equals("") || password.equals(""))
@@ -114,7 +120,7 @@ public class LoginActivity extends AppCompatActivity {
                                         sessionManager.setEmail(user.getEmail());
                                         sessionManager.setPassword(user.getPassword());
                                         sessionManager.setName(user.getName());
-
+                                        dialogBar.hideDialog();
                                         dbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
                                         dbHelper.fetchAndPopulateUserSounds(user.getId());
                                         startActivity(intent);

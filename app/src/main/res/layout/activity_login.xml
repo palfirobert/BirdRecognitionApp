@@ -19,6 +19,7 @@
             android:id="@+id/login_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:importantForAutofill="yes"
             android:layout_marginTop="16dp"
             android:background="@drawable/login_form_border"
             android:drawableLeft="@drawable/ic_baseline_email_24"
@@ -34,6 +35,7 @@
             android:background="@drawable/login_form_border"
             android:drawableLeft="@drawable/ic_baseline_lock_24"
             android:drawablePadding="8dp"
+            android:importantForAutofill="yes"
             android:hint="Password"
             android:inputType="textPassword"
             android:padding="8dp" />

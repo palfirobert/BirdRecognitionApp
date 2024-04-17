@@ -1,5 +1,6 @@
 package com.example.birdrecognitionapp.database;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -16,6 +17,7 @@ import com.example.birdrecognitionapp.dto.DeleteSoundDto;
 import com.example.birdrecognitionapp.dto.GetUserSoundsDto;
 import com.example.birdrecognitionapp.dto.SoundResponse;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
+import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
 
@@ -69,6 +71,7 @@ public class DbHelper extends SQLiteOpenHelper {
     String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
     User user=new User();
     static Map<String, Long> creationDateOfSounds=new HashMap<>();
+    LoadingDialogBar loadingDialogBar;
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
@@ -77,6 +80,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
+        this.loadingDialogBar = new LoadingDialogBar(context);
     }
 
     @Override
