@@ -58,6 +58,7 @@ import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
 import com.example.birdrecognitionapp.models.UserDetails;
 import com.example.birdrecognitionapp.services.RecordingService;
+import com.example.birdrecognitionapp.services.SessionManagerService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 
@@ -176,7 +177,7 @@ public class RecordFragment extends Fragment {
             distinctPredictionList.stream().forEach(prediction ->
                     prediction_urls.add(dbHelper.getUrlByLatinName(prediction.getScientific_name())));
             System.out.println(prediction_urls);
-        }else{
+        } else {
             distinctPredictionList.stream().forEach(prediction ->
                     prediction_urls.add(null));
         }
@@ -524,7 +525,13 @@ public class RecordFragment extends Fragment {
             activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        if (userDetails != null) {
+        if (userDetails.getUse_location() != null) {
+            boolean useLocation = userDetails.getUse_location() == 1;
+            saveSelectedOption(useLocation);
+            saveSelectedLanguage(userDetails.getLanguage());
+        } else {
+            SessionManagerService sessionManager = new SessionManagerService(getContext());
+            userDetails = new UserDetails(sessionManager.getUserId(), sessionManager.getLanguage(), sessionManager.getUseLocation());
             boolean useLocation = userDetails.getUse_location() == 1;
             saveSelectedOption(useLocation);
             saveSelectedLanguage(userDetails.getLanguage());
@@ -543,7 +550,7 @@ public class RecordFragment extends Fragment {
             useLocation = false;
         }
         mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
-        mysqlDbHelper.fetchAndPopulateUserSounds(user.getId());
+        mysqlDbHelper.fetchAndPopulateUserSounds(user.getId()); //todo muta asta de aici ca nu e bine.
 
 
     }
@@ -623,7 +630,7 @@ public class RecordFragment extends Fragment {
                     lon = lastKnownLocation.getLongitude();
                 }
             }
-            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon), Optional.of(recordingItem.getTime_added()),false);
+            new RecordingService().postData(base64EncodedString, useLocation, Optional.of(lat), Optional.of(lon), Optional.of(recordingItem.getTime_added()), false);
         }
     }
 

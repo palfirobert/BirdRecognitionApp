@@ -6,6 +6,7 @@ import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
 import com.example.birdrecognitionapp.models.User;
 import com.example.birdrecognitionapp.models.UserDetails;
+import com.example.birdrecognitionapp.services.SessionManagerService;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -43,12 +44,12 @@ public class LoginActivity extends AppCompatActivity {
 
     User user;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+        SessionManagerService sessionManager = new SessionManagerService(this);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -96,7 +97,14 @@ public class LoginActivity extends AppCompatActivity {
                                         );
                                         user=new User(loginResponse.getUser_id(),loginResponse.getName(),loginResponse.getSurname(),loginResponse.getEmail(),loginResponse.getPassword());
                                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                                        intent.putExtra("userDetails", userDetails);
+                                        sessionManager.setLogin(true);
+                                        sessionManager.setUseLocation(userDetails.getUse_location());
+                                        sessionManager.setLanguage(userDetails.getLanguage());
+                                        sessionManager.setUserId(userDetails.getUser_id());
+                                        sessionManager.setSurname(user.getSurname());
+                                        sessionManager.setEmail(user.getEmail());
+                                        sessionManager.setPassword(user.getPassword());
+                                        sessionManager.setName(user.getName());
                                         startActivity(intent);
                                     }
                                 }

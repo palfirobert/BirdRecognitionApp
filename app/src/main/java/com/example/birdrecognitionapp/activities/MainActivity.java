@@ -50,7 +50,7 @@ import java.util.Objects;
  * The server is deployed on python anywhere and its endpoint is configured in the record service
  * If you want to take from this checkpoint the main topic is the sound recording service that works
  */
-public class MainActivity extends AppCompatActivity implements SavedRecordingsAdapter.OnPredictButtonPressListener,NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements SavedRecordingsAdapter.OnPredictButtonPressListener, NavigationView.OnNavigationItemSelectedListener {
 
 
     // constant for storing audio permission
@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
     ViewPager2 viewPager2;
     ViewPagerAdapter myViewPagerAdapter;
     MainActivityRecordFragmentSharedModel sharedModel;
-    User user=new User();
+    User user = new User();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +70,10 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
             Objects.requireNonNull(getSupportActionBar()).hide();
         } catch (Exception e) {
         }
-
+        if (user.getId() == null) {
+            SessionManagerService sessionManager = new SessionManagerService(this);
+            user = new User(sessionManager.getUserId(), sessionManager.getName(), sessionManager.getSurname(), sessionManager.getEmail(), sessionManager.getPassword());
+        }
         setupMenuDrawerAndToolbar();
         tabLayout = findViewById(R.id.tab_layout);
         viewPager2 = findViewById(R.id.view_pager);
@@ -184,8 +187,7 @@ public class MainActivity extends AppCompatActivity implements SavedRecordingsAd
         }
     }
 
-    private void setupMenuDrawerAndToolbar()
-    {
+    private void setupMenuDrawerAndToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         drawerLayout = findViewById(R.id.drawer_layout);
