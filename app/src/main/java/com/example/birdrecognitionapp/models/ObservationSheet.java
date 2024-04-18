@@ -8,12 +8,27 @@ public class ObservationSheet {
     String uploadDate;
     String location;
     String userId;
-    String soundId;
+    static Integer soundId;
     static Boolean isCalledFromSavedRecordingAdapter;
+    static String audioFileName;
 
-    ObservationSheet(){}
+    ObservationSheet() {
+    }
 
-    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId) {
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId, String audioFileName) {
+        this.observationDate = observationDate;
+        this.species = species;
+        this.number = number;
+        this.observer = observer;
+        this.uploadDate = uploadDate;
+        this.location = location;
+        this.userId = userId;
+        this.soundId = soundId;
+        this.audioFileName = audioFileName;
+    }
+
+
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId) {
         this.observationDate = observationDate;
         this.species = species;
         this.number = number;
@@ -24,7 +39,7 @@ public class ObservationSheet {
         this.soundId = soundId;
     }
 
-    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId, Boolean isCalledFromSavedRecordingAdapter) {
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId, Boolean isCalledFromSavedRecordingAdapter) {
         this.observationDate = observationDate;
         this.species = species;
         this.number = number;
@@ -42,6 +57,14 @@ public class ObservationSheet {
 
     public static void setObservationDate(String observationDate) {
         ObservationSheet.observationDate = observationDate;
+    }
+
+    public static String getAudioFileName() {
+        return audioFileName;
+    }
+
+    public static void setAudioFileName(String audioFileName) {
+        ObservationSheet.audioFileName = audioFileName;
     }
 
     public String getSpecies() {
@@ -100,11 +123,11 @@ public class ObservationSheet {
         this.userId = userId;
     }
 
-    public String getSoundId() {
+    public static Integer getSoundId() {
         return soundId;
     }
 
-    public void setSoundId(String soundId) {
-        this.soundId = soundId;
+    public static void setSoundId(Integer soundId) {
+        ObservationSheet.soundId = soundId;
     }
 }

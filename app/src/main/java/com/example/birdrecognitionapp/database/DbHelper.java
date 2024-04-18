@@ -18,6 +18,7 @@ import com.example.birdrecognitionapp.dto.GetUserSoundsDto;
 import com.example.birdrecognitionapp.dto.SoundResponse;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
+import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
 
@@ -65,16 +66,42 @@ public class DbHelper extends SQLiteOpenHelper {
             COLUMN_TIME_ADDED + " INTEGER" + COMA_SEP +
             COLUMN_USER_ID + " TEXT" + COMA_SEP +
             COLUMN_BLOB_REFERENCE + " TEXT" + ")";
+
+    // Constants for the observation_sheet table
+    public static final String TABLE_OBSERVATION_SHEET = "observation_sheet";
+    public static final String COLUMN_OBSERVATION_DATE = "observation_date";
+    public static final String COLUMN_SPECIES = "species";
+    public static final String COLUMN_NUMBER = "number";
+    public static final String COLUMN_OBSERVER = "observer";
+    public static final String COLUMN_UPLOAD_DATE = "upload_date";
+    public static final String COLUMN_LOCATION = "location";
+    public static final String COLUMN_SOUND_ID = "sound_id";
+    String SQLITE_CREATE_OBSERVATION_TABLE = "CREATE TABLE " + TABLE_OBSERVATION_SHEET + " (" +
+            "id INTEGER PRIMARY KEY AUTOINCREMENT" + COMA_SEP +
+            COLUMN_OBSERVATION_DATE + " TIMESTAMP" + COMA_SEP +
+            COLUMN_SPECIES + " VARCHAR(255)" + COMA_SEP +
+            COLUMN_NUMBER + " INT" + COMA_SEP +
+            COLUMN_OBSERVER + " VARCHAR(255)" + COMA_SEP +
+            COLUMN_UPLOAD_DATE + " TIMESTAMP" + COMA_SEP +
+            COLUMN_LOCATION + " VARCHAR(255)" + COMA_SEP +
+            COLUMN_USER_ID + " VARCHAR(255)" + COMA_SEP +
+            COLUMN_SOUND_ID + " INTEGER" + COMA_SEP +
+            "UNIQUE(sound_id)" + COMA_SEP +
+            "FOREIGN KEY(" + COLUMN_SOUND_ID + ") REFERENCES saved_recording_table(id) ON DELETE SET NULL" +
+            ")";
+
     private static OnDatabaseChangedListener onDatabaseChangedListener;
-    public static boolean firstLogin=true;
+    public static boolean firstLogin = true;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     String filePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/";
-    User user=new User();
-    static Map<String, Long> creationDateOfSounds=new HashMap<>();
+    User user = new User();
+    static Map<String, Long> creationDateOfSounds = new HashMap<>();
     LoadingDialogBar loadingDialogBar;
+
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQLITE_CREATE_TABLE);
+        sqLiteDatabase.execSQL(SQLITE_CREATE_OBSERVATION_TABLE);
     }
 
     public DbHelper(Context context) {
@@ -86,6 +113,7 @@ public class DbHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_OBSERVATION_SHEET);
     }
 
     public boolean addRecording(RecordingItem recordingItem) {
@@ -147,6 +175,53 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Method to add an observation to the database
+    public boolean addObservation(ObservationSheet observationItem) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_OBSERVATION_DATE, ObservationSheet.getObservationDate());
+        values.put(COLUMN_SPECIES, observationItem.getSpecies());
+        values.put(COLUMN_NUMBER, observationItem.getNumber());
+        values.put(COLUMN_OBSERVER, observationItem.getObserver());
+        values.put(COLUMN_UPLOAD_DATE, observationItem.getUploadDate());
+        values.put(COLUMN_LOCATION, observationItem.getLocation());
+        values.put(COLUMN_USER_ID, observationItem.getUserId());
+        values.put(COLUMN_SOUND_ID, observationItem.getSoundId());
+        long id = db.insertWithOnConflict(TABLE_OBSERVATION_SHEET, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        return id != -1;
+    }
+
+    // Method to delete an observation from the database by ID
+    public void deleteObservation(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_OBSERVATION_SHEET, "id = ?", new String[]{String.valueOf(id)});
+    }
+
+    // Method to fetch all observations from the database
+    public ArrayList<ObservationSheet> getAllObservations() {
+        ArrayList<ObservationSheet> observations = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        // Updated query to order by upload_date in descending order (or any other column as needed)
+        String query = "SELECT * FROM " + TABLE_OBSERVATION_SHEET + " ORDER BY upload_date DESC";
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                int id = cursor.getInt(0);
+                String observationDate = cursor.getString(1);
+                String species = cursor.getString(2);
+                int number = cursor.getInt(3);
+                String observer = cursor.getString(4);
+                String uploadDate = cursor.getString(5);
+                String location = cursor.getString(6);
+                String userId = cursor.getString(7);
+                int soundId = cursor.getInt(8);
+                ObservationSheet observationItem = new ObservationSheet(observationDate, species, number, observer, uploadDate, location, userId, soundId);
+                observations.add(observationItem);
+            }
+            cursor.close();
+        }
+        return observations;
+    }
 
 
     public static void setOnDatabaseChangedListener(OnDatabaseChangedListener listener) {
@@ -218,19 +293,18 @@ public class DbHelper extends SQLiteOpenHelper {
             retriever.setDataSource(file.getAbsolutePath());
             String durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             long length = Long.parseLong(durationStr); // Duration in milliseconds
-            String blobReference=user.getId()+"/"+file.getName();
+            String blobReference = user.getId() + "/" + file.getName();
             long timeAdded;
             System.out.println(file.getName());
             System.out.println(creationDateOfSounds);
             System.out.println(creationDateOfSounds.get(file.getName()));
-            if(creationDateOfSounds.get(file.getName())!=null) {
-                timeAdded = creationDateOfSounds.get(file.getName())*1000;
-            }
-            else
-                timeAdded=file.lastModified();
+            if (creationDateOfSounds.get(file.getName()) != null) {
+                timeAdded = creationDateOfSounds.get(file.getName()) * 1000;
+            } else
+                timeAdded = file.lastModified();
             String absolutePath = filePath + file.getName();
             // Now you have the length in milliseconds, proceed to add the recording
-            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded,user.getId(),blobReference);
+            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded, user.getId(), blobReference);
             addRecording(newRecording);
         } catch (Exception e) {
             e.printStackTrace();
@@ -244,8 +318,8 @@ public class DbHelper extends SQLiteOpenHelper {
             executorService.shutdown();
         }
     }
-    public void addSoundToDb(RecordingItem recordingItem)
-    {
+
+    public void addSoundToDb(RecordingItem recordingItem) {
 
         // Build the Retrofit instance
         Retrofit retrofit = new Retrofit.Builder()
@@ -282,14 +356,16 @@ public class DbHelper extends SQLiteOpenHelper {
         });
 
     }
+
     public void fetchAndPopulateUserSounds(String userId) {
-        if(firstLogin) {
+        if (firstLogin) {
             loadingDialogBar.showDialog("Fetching sounds...");
             getCreationDateOfSounds();
-            firstLogin=false;
+            firstLogin = false;
         }
     }
-    public void downloadUserSounds(GetUserSoundsDto userSoundsDto){
+
+    public void downloadUserSounds(GetUserSoundsDto userSoundsDto) {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
@@ -345,6 +421,7 @@ public class DbHelper extends SQLiteOpenHelper {
         });
 
     }
+
     public void unzip(String zipFilePath, String destinationDirectory) throws IOException {
         File destDir = new File(destinationDirectory);
         if (!destDir.exists()) {
@@ -377,19 +454,19 @@ public class DbHelper extends SQLiteOpenHelper {
             }
         }
     }
+
     public void clearDirectory(File dir) {
         if (dir.exists() && dir.isDirectory()) {
             File[] files = dir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    deleteRecording("/storage/emulated/0/soundrecordings/"+file.getName());
+                    deleteRecording("/storage/emulated/0/soundrecordings/" + file.getName());
                 }
             }
         }
     }
 
-    public void deleteSoundFromBlob(DeleteSoundDto soundDto)
-    {
+    public void deleteSoundFromBlob(DeleteSoundDto soundDto) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual URL
                 .addConverterFactory(GsonConverterFactory.create()) // Assuming you're using Gson
@@ -420,7 +497,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     }
 
-    private void getCreationDateOfSounds(){
+    private void getCreationDateOfSounds() {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
@@ -446,7 +523,7 @@ public class DbHelper extends SQLiteOpenHelper {
             public void onResponse(Call<Map<String, Long>> call, Response<Map<String, Long>> response) {
                 if (response.isSuccessful()) {
                     // Here you have your hashmap with sound name as key and timestamp as value
-                    creationDateOfSounds= response.body();
+                    creationDateOfSounds = response.body();
                     System.out.println("-----------------------------");
                     downloadUserSounds(new GetUserSoundsDto(user.getId()));
 
@@ -461,6 +538,32 @@ public class DbHelper extends SQLiteOpenHelper {
             }
         });
 
+    }
+
+    public Integer getSoundIdByName(String audioName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    TABLE_NAME,                // The table to query
+                    new String[]{"id"},        // The columns to return
+                    COLUMN_NAME + " = ?",      // The columns for the WHERE clause
+                    new String[]{audioName},   // The values for the WHERE clause
+                    null,                      // don't group the rows
+                    null,                      // don't filter by row groups
+                    null                       // The sort order
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+            }
+        } catch (Exception e) {
+            Log.e("DbHelper", "Error while trying to get sound ID by name", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null; // Return null if no ID is found or an error occurs
     }
 
 

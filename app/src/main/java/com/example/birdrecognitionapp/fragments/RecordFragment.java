@@ -421,6 +421,14 @@ public class RecordFragment extends Fragment {
             }
         });
 
+        this.predictionButtonTwo.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                showOptionsPopupMenu(view, predictionButtonTwo.getText().toString());
+                return true;
+            }
+        });
+
 
         this.predictionButtonThree.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -435,6 +443,14 @@ public class RecordFragment extends Fragment {
                 // Create an Intent to open the browser with the Google search URL
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(searchString));
                 startActivity(browserIntent);
+            }
+        });
+
+        this.predictionButtonThree.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                showOptionsPopupMenu(view, predictionButtonThree.getText().toString());
+                return true;
             }
         });
         return recordView;
@@ -455,13 +471,13 @@ public class RecordFragment extends Fragment {
 
                         EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
                         // Format the current date and time
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm");
                         String formattedDateTime = LocalDateTime.now().format(formatter);
 
                         // Set the formatted date and time to your text field
-                        editUploadDate.setText(formattedDateTime);
+                        editUploadDate.setText(formattedDateTime+" PM");
                         EditText editSpecies = dialogView.findViewById(R.id.editSpecies);
-                        editSpecies.setText(species.replaceAll("[0-9%]", ""));
+                        editSpecies.setText(species.replaceAll("[0-9%.]", ""));
 
                         LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
                         String locationProvider = LocationManager.GPS_PROVIDER;
@@ -483,6 +499,7 @@ public class RecordFragment extends Fragment {
                         editObserver.setText(user.getName() + " " + user.getSurname());
 
                         EditText editObservationDate = dialogView.findViewById(R.id.editObservationDate);
+                        System.out.println(ObservationSheet.getObservationDate());
                         if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
                             editObservationDate.setText(DateUtils.formatDateTime(getContext(), Long.valueOf(ObservationSheet.getObservationDate()),
                                     DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
@@ -490,12 +507,17 @@ public class RecordFragment extends Fragment {
                         } else
                             editObservationDate.setText(LocalDateTime.now().getYear() + "-" + LocalDateTime.now().getMonth().getValue() + "-" + LocalDateTime.now().getDayOfMonth());
 
+                        EditText editNumberOfSpecies=dialogView.findViewById(R.id.editNumber);
                         // Create the AlertDialog for observation sheet
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         builder.setView(dialogView)
                                 .setTitle("Enter Observation Details")
                                 .setPositiveButton("Save", (dialog, which) -> {
-                                    //todo logic for observation sheet
+                                    System.out.println(ObservationSheet.getSoundId());
+                                    ObservationSheet observationSheet=new ObservationSheet(ObservationSheet.getObservationDate(),editSpecies.getText().toString(),
+                                            Integer.parseInt(editNumberOfSpecies.getText().toString()),editObserver.getText().toString(),editUploadDate.getText().toString(),
+                                            editLocation.getText().toString(),user.getId(),ObservationSheet.getSoundId(),ObservationSheet.getAudioFileName());
+                                    mysqlDbHelper.addObservation(observationSheet);
                                 })
                                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 

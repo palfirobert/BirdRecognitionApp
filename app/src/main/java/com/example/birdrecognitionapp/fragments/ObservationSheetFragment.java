@@ -2,13 +2,26 @@ package com.example.birdrecognitionapp.fragments;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.birdrecognitionapp.R;
+import com.example.birdrecognitionapp.adapters.ObservationSheetAdapter;
+import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.models.ObservationSheet;
+
+import java.util.ArrayList;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -17,6 +30,12 @@ import com.example.birdrecognitionapp.R;
  */
 public class ObservationSheetFragment extends Fragment {
 
+    @BindView(R.id.recyclerViewObservationSheet)
+    RecyclerView recyclerViewObservationSheet;
+
+    private DbHelper dbHelper;
+    private ArrayList<ObservationSheet> listObservations;
+    private ObservationSheetAdapter observationSheetAdapter;
 
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -51,7 +70,42 @@ public class ObservationSheetFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_observation_sheet, container, false);
+        View view = inflater.inflate(R.layout.fragment_observation_sheet, container, false);
+        ButterKnife.bind(this, view);
+        return view;
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        dbHelper = new DbHelper(getContext());
+        recyclerViewObservationSheet.setHasFixedSize(true);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+        recyclerViewObservationSheet.setLayoutManager(linearLayoutManager);
+        loadData();
+    }
+    private void loadData() {
+        listObservations = dbHelper.getAllObservations();
+        if (listObservations == null || listObservations.isEmpty()) {
+            Toast.makeText(getContext(), "No observation data found.", Toast.LENGTH_SHORT).show();
+        } else {
+            observationSheetAdapter = new ObservationSheetAdapter(getActivity(), listObservations);
+            recyclerViewObservationSheet.setAdapter(observationSheetAdapter);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadData();
+    }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.shutdownExecutorService();
+        }
+    }
+
+
 }

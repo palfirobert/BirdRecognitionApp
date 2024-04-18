@@ -146,6 +146,7 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
                             RecordingItem itemToPredict = list.get(getAdapterPosition());
                             ObservationSheet.setCalledFromSavedRecordingAdapter(true);
                             ObservationSheet.setObservationDate(String.valueOf(itemToPredict.getTime_added()));
+                            ObservationSheet.setSoundId(dbHelper.getSoundIdByName(itemToPredict.getName()));
                             if (context instanceof OnPredictButtonPressListener) {
                                 ((OnPredictButtonPressListener) context).switchToFirstTab(itemToPredict);
                             }

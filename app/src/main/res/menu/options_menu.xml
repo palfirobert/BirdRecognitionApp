@@ -5,7 +5,4 @@
     <item
         android:id="@+id/menu_delete"
         android:title="DELETE" />
-    <item
-        android:id="@+id/menu_generate_observation_sheet"
-        android:title="GENERATE OBSERVATION SHEET" />
 </menu>
