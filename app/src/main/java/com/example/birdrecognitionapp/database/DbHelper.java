@@ -178,8 +178,13 @@ public class DbHelper extends SQLiteOpenHelper {
     // Method to add an observation to the database
     public boolean addObservation(ObservationSheet observationItem) {
         SQLiteDatabase db = this.getWritableDatabase();
+
+        // First, delete existing observation sheets with the same sound_id
+        deleteObservationsBySoundId(observationItem.getSoundId(), db);
+
+        // Now insert the new observation sheet
         ContentValues values = new ContentValues();
-        values.put(COLUMN_OBSERVATION_DATE, ObservationSheet.getObservationDate());
+        values.put(COLUMN_OBSERVATION_DATE, observationItem.getObservationDate());
         values.put(COLUMN_SPECIES, observationItem.getSpecies());
         values.put(COLUMN_NUMBER, observationItem.getNumber());
         values.put(COLUMN_OBSERVER, observationItem.getObserver());
@@ -187,8 +192,13 @@ public class DbHelper extends SQLiteOpenHelper {
         values.put(COLUMN_LOCATION, observationItem.getLocation());
         values.put(COLUMN_USER_ID, observationItem.getUserId());
         values.put(COLUMN_SOUND_ID, observationItem.getSoundId());
-        long id = db.insertWithOnConflict(TABLE_OBSERVATION_SHEET, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        long id = db.insert(TABLE_OBSERVATION_SHEET, null, values);
         return id != -1;
+    }
+
+    // Method to delete all observations with a specific sound_id
+    private void deleteObservationsBySoundId(int soundId, SQLiteDatabase db) {
+        db.delete(TABLE_OBSERVATION_SHEET, COLUMN_SOUND_ID + " = ?", new String[]{String.valueOf(soundId)});
     }
 
     // Method to delete an observation from the database by ID
@@ -202,7 +212,7 @@ public class DbHelper extends SQLiteOpenHelper {
         ArrayList<ObservationSheet> observations = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         // Updated query to order by upload_date in descending order (or any other column as needed)
-        String query = "SELECT * FROM " + TABLE_OBSERVATION_SHEET + " ORDER BY upload_date DESC";
+        String query = "SELECT * FROM " + TABLE_OBSERVATION_SHEET;
         Cursor cursor = db.rawQuery(query, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -214,8 +224,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 String uploadDate = cursor.getString(5);
                 String location = cursor.getString(6);
                 String userId = cursor.getString(7);
-                int soundId = cursor.getInt(8);
-                ObservationSheet observationItem = new ObservationSheet(observationDate, species, number, observer, uploadDate, location, userId, soundId);
+                ObservationSheet observationItem = new ObservationSheet(observationDate, species, number, observer, uploadDate, location, userId);
                 observations.add(observationItem);
             }
             cursor.close();

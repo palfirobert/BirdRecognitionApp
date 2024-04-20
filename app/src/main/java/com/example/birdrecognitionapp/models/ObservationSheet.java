@@ -38,6 +38,15 @@ public class ObservationSheet {
         this.userId = userId;
         this.soundId = soundId;
     }
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId) {
+        this.observationDate = observationDate;
+        this.species = species;
+        this.number = number;
+        this.observer = observer;
+        this.uploadDate = uploadDate;
+        this.location = location;
+        this.userId = userId;
+    }
 
     public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId, Boolean isCalledFromSavedRecordingAdapter) {
         this.observationDate = observationDate;
