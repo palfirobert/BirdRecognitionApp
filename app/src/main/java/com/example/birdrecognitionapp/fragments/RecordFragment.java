@@ -49,6 +49,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.database.BirdsDbHelper;
 import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.dto.ObservationSheetDto;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.enums.LANGUAGE;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
@@ -66,11 +67,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -513,11 +516,24 @@ public class RecordFragment extends Fragment {
                         builder.setView(dialogView)
                                 .setTitle("Enter Observation Details")
                                 .setPositiveButton("Save", (dialog, which) -> {
-                                    System.out.println(ObservationSheet.getSoundId());
+                                    System.out.println(editUploadDate.getText().toString());
                                     ObservationSheet observationSheet=new ObservationSheet(ObservationSheet.getObservationDate(),editSpecies.getText().toString(),
                                             Integer.parseInt(editNumberOfSpecies.getText().toString()),editObserver.getText().toString(),editUploadDate.getText().toString(),
                                             editLocation.getText().toString(),user.getId(),ObservationSheet.getSoundId(),ObservationSheet.getAudioFileName());
                                     mysqlDbHelper.addObservation(observationSheet);
+                                    try {
+                                        SimpleDateFormat date_formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm a");
+                                        // Parse the date string into a Date object
+                                        Date date = date_formatter.parse(editUploadDate.getText().toString());
+                                        // Convert the Date to a timestamp (milliseconds since January 1, 1970, 00:00:00 GMT)
+                                        Long timestamp = date.getTime();
+                                        mysqlDbHelper.insertObservationSheet(new ObservationSheetDto(ObservationSheet.getObservationDate(),editSpecies.getText().toString(),
+                                                Integer.parseInt(editNumberOfSpecies.getText().toString()),editObserver.getText().toString(),timestamp.toString(),
+                                                editLocation.getText().toString(),user.getId(),ObservationSheet.getSoundId()));
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                    }
+
                                 })
                                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 

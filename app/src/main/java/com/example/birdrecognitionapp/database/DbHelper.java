@@ -15,6 +15,7 @@ import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.dto.DeleteSoundDto;
 import com.example.birdrecognitionapp.dto.GetUserSoundsDto;
+import com.example.birdrecognitionapp.dto.ObservationSheetDto;
 import com.example.birdrecognitionapp.dto.SoundResponse;
 import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
@@ -575,5 +576,42 @@ public class DbHelper extends SQLiteOpenHelper {
         return null; // Return null if no ID is found or an error occurs
     }
 
+    public void insertObservationSheet(ObservationSheetDto observationSheetDto){
+        int timeoutInSeconds = 30;
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
 
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual server URL
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+        AzureDbAPI service = retrofit.create(AzureDbAPI.class);
+        Call<ResponseBody> call = service.insertObservation(observationSheetDto);
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // Handle successful response
+                    Toast.makeText(context, "Observation inserted successfully!", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Handle unsuccessful response, like 400 or 500 status codes
+                    Log.e("APIError", "Server contacted but failed to insert data");
+                    Toast.makeText(context, "Failed to insert observation data", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // Handle total failure to connect to server
+                t.printStackTrace();
+                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 }

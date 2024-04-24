@@ -4,6 +4,7 @@ import com.example.birdrecognitionapp.dto.DeleteSoundDto;
 import com.example.birdrecognitionapp.dto.GetUserSoundsDto;
 import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
+import com.example.birdrecognitionapp.dto.ObservationSheetDto;
 import com.example.birdrecognitionapp.dto.SignupReq;
 import com.example.birdrecognitionapp.dto.SignupResponse;
 import com.example.birdrecognitionapp.dto.SoundResponse;
@@ -47,4 +48,7 @@ public interface AzureDbAPI {
 
     @GET("getcreationdate")
     Call<Map<String, Long>> getCreationDateOfSounds(@Query("user_id") String userId);
+
+    @POST("addobservationsheet")
+    Call<ResponseBody> insertObservation(@Body ObservationSheetDto observationSheetDto);
 }
