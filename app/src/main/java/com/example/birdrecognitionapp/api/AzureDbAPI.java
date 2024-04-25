@@ -51,4 +51,7 @@ public interface AzureDbAPI {
 
     @POST("addobservationsheet")
     Call<ResponseBody> insertObservation(@Body ObservationSheetDto observationSheetDto);
+
+    @GET("observations/{user_id}/")
+    Call<List<ObservationSheetDto>> getObservationsByUserId(@Path("user_id") String userId);
 }

@@ -3,6 +3,7 @@ package com.example.birdrecognitionapp.models;
 import java.io.Serializable;
 
 public class RecordingItem implements Serializable {
+    private String id;
     private String name;
     private String path;
     private long length;
@@ -25,6 +26,15 @@ public class RecordingItem implements Serializable {
         this.time_added = time_added;
         this.user_id = user_id;
         this.blob_reference = blob_reference;
+    }
+    public RecordingItem(String name, String path, long length, long time_added, String user_id, String blob_reference,String id) {
+        this.name = name;
+        this.path = path;
+        this.length = length;
+        this.time_added = time_added;
+        this.user_id = user_id;
+        this.blob_reference = blob_reference;
+        this.id=id;
     }
 
     public RecordingItem(){}
@@ -87,5 +97,13 @@ public class RecordingItem implements Serializable {
                 ", user_id='" + user_id + '\'' +
                 ", blob_reference='" + blob_reference + '\'' +
                 '}';
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

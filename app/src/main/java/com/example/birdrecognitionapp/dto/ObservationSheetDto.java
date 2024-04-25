@@ -8,9 +8,9 @@ public class ObservationSheetDto {
     String uploadDate;
     String location;
     String userId;
-    Integer soundId;
+    String soundId;
 
-    public ObservationSheetDto(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId) {
+    public ObservationSheetDto(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId) {
         this.observationDate = observationDate;
         this.species = species;
         this.number = number;
@@ -77,11 +77,11 @@ public class ObservationSheetDto {
         this.userId = userId;
     }
 
-    public Integer getSoundId() {
+    public String getSoundId() {
         return soundId;
     }
 
-    public void setSoundId(Integer soundId) {
+    public void setSoundId(String soundId) {
         this.soundId = soundId;
     }
 }

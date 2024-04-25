@@ -9,10 +9,14 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import com.example.birdrecognitionapp.R;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.birdrecognitionapp.models.ObservationSheet;
+
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,15 +63,13 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
         EditText editObserver = dialogView.findViewById(R.id.editObserver);
         EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
         EditText editLocation = dialogView.findViewById(R.id.editLocation);
-//        if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
-//            editObservationDate.setText(DateUtils.formatDateTime(context, Long.valueOf(ObservationSheet.getObservationDate()),
-//                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
-//                            | DateUtils.FORMAT_SHOW_YEAR));
-//        } else
-//            editObservationDate.setText(LocalDateTime.now().getYear() + "-" + LocalDateTime.now().getMonth().getValue() + "-" + LocalDateTime.now().getDayOfMonth());
-        editObservationDate.setText(DateUtils.formatDateTime(context, Long.valueOf(observation.getObservationDate()),
-                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
-                        | DateUtils.FORMAT_SHOW_YEAR));
+        try {
+            editObservationDate.setText(DateUtils.formatDateTime(context, Long.valueOf(observation.getObservationDate()),
+                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
+                            | DateUtils.FORMAT_SHOW_YEAR));
+        } catch (Exception e) {
+            editObservationDate.setText(observation.getObservationDate());
+        }
         editSpecies.setText(observation.getSpecies());
         editNumber.setText(String.valueOf(observation.getNumber()));
         editObserver.setText(observation.getObserver());
@@ -89,7 +91,7 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
             super(itemView);
             imageView = itemView.findViewById(R.id.imageView);
             fileNameText = itemView.findViewById(R.id.file_name_text);
-            fileTimeAdded=itemView.findViewById(R.id.file_time_added);
+            fileTimeAdded = itemView.findViewById(R.id.file_time_added);
         }
     }
 }

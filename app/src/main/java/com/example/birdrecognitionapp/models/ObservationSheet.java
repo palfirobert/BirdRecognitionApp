@@ -8,14 +8,14 @@ public class ObservationSheet {
     String uploadDate;
     String location;
     String userId;
-    static Integer soundId;
-    static Boolean isCalledFromSavedRecordingAdapter;
+    static String soundId;
+    static Boolean isCalledFromSavedRecordingAdapter=false;
     static String audioFileName;
 
     ObservationSheet() {
     }
 
-    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId, String audioFileName) {
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId, String audioFileName) {
         this.observationDate = observationDate;
         this.species = species;
         this.number = number;
@@ -28,7 +28,7 @@ public class ObservationSheet {
     }
 
 
-    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId) {
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId) {
         this.observationDate = observationDate;
         this.species = species;
         this.number = number;
@@ -48,7 +48,7 @@ public class ObservationSheet {
         this.userId = userId;
     }
 
-    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, Integer soundId, Boolean isCalledFromSavedRecordingAdapter) {
+    public ObservationSheet(String observationDate, String species, Integer number, String observer, String uploadDate, String location, String userId, String soundId, Boolean isCalledFromSavedRecordingAdapter) {
         this.observationDate = observationDate;
         this.species = species;
         this.number = number;
@@ -132,11 +132,11 @@ public class ObservationSheet {
         this.userId = userId;
     }
 
-    public static Integer getSoundId() {
+    public static String getSoundId() {
         return soundId;
     }
 
-    public static void setSoundId(Integer soundId) {
+    public static void setSoundId(String soundId) {
         ObservationSheet.soundId = soundId;
     }
 

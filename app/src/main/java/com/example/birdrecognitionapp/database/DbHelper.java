@@ -22,6 +22,7 @@ import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
+import com.example.birdrecognitionapp.utils.DateUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +54,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "saved_recordings.db";
     private static final int DATABASE_VERSION = 1;
     public static final String TABLE_NAME = "saved_recording_table";
+    public static final String COLUMN_ID = "id";
     public static final String COLUMN_NAME = "name";
     public static final String COLUMN_PATH = "path";
     public static final String COLUMN_LENGTH = "length";
@@ -60,7 +63,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String COLUMN_BLOB_REFERENCE = "blob_reference";
     public static final String COMA_SEP = ",";
     public static final String SQLITE_CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" +
-            "id INTEGER PRIMARY KEY AUTOINCREMENT" + COMA_SEP +
+            "id VARCHAR(255) PRIMARY KEY" + COMA_SEP +
             COLUMN_NAME + " TEXT" + COMA_SEP +
             COLUMN_PATH + " TEXT" + COMA_SEP +
             COLUMN_LENGTH + " INTEGER" + COMA_SEP +
@@ -86,7 +89,7 @@ public class DbHelper extends SQLiteOpenHelper {
             COLUMN_UPLOAD_DATE + " TIMESTAMP" + COMA_SEP +
             COLUMN_LOCATION + " VARCHAR(255)" + COMA_SEP +
             COLUMN_USER_ID + " VARCHAR(255)" + COMA_SEP +
-            COLUMN_SOUND_ID + " INTEGER" + COMA_SEP +
+            COLUMN_SOUND_ID + " VARCHAR(255)" + COMA_SEP +
             "UNIQUE(sound_id)" + COMA_SEP +
             "FOREIGN KEY(" + COLUMN_SOUND_ID + ") REFERENCES saved_recording_table(id) ON DELETE SET NULL" +
             ")";
@@ -98,6 +101,7 @@ public class DbHelper extends SQLiteOpenHelper {
     User user = new User();
     static Map<String, Long> creationDateOfSounds = new HashMap<>();
     LoadingDialogBar loadingDialogBar;
+    List<ObservationSheetDto> observationSheets=new ArrayList<>();
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
@@ -121,6 +125,7 @@ public class DbHelper extends SQLiteOpenHelper {
         try {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues contentValues = new ContentValues();
+            contentValues.put(COLUMN_ID, recordingItem.getId());
             contentValues.put(COLUMN_NAME, recordingItem.getName());
             contentValues.put(COLUMN_PATH, recordingItem.getPath());
             contentValues.put(COLUMN_LENGTH, recordingItem.getLength());
@@ -198,7 +203,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     // Method to delete all observations with a specific sound_id
-    private void deleteObservationsBySoundId(int soundId, SQLiteDatabase db) {
+    private void deleteObservationsBySoundId(String soundId, SQLiteDatabase db) {
         db.delete(TABLE_OBSERVATION_SHEET, COLUMN_SOUND_ID + " = ?", new String[]{String.valueOf(soundId)});
     }
 
@@ -313,8 +318,8 @@ public class DbHelper extends SQLiteOpenHelper {
             } else
                 timeAdded = file.lastModified();
             String absolutePath = filePath + file.getName();
-            // Now you have the length in milliseconds, proceed to add the recording
-            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded, user.getId(), blobReference);
+            String sound_id=user.getId()+"-"+file.getName().replaceAll("[^\\d]", "");
+            RecordingItem newRecording = new RecordingItem(file.getName(), absolutePath, (int) length, timeAdded, user.getId(), blobReference,sound_id);
             addRecording(newRecording);
         } catch (Exception e) {
             e.printStackTrace();
@@ -333,7 +338,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // Build the Retrofit instance
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
+                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -414,12 +419,14 @@ public class DbHelper extends SQLiteOpenHelper {
 
                         Toast.makeText(context, "Successfully fetched sounds!", Toast.LENGTH_SHORT).show();
                         System.out.println("++++++++++++++++++++++++++++++++++++");
-                        loadingDialogBar.hideDialog();
+                        getObservationsOfUser(user.getId());
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 } else {
                     Log.e("DownloadError", "Server contacted but unable to retrieve content");
+                    getObservationsOfUser(user.getId());
                     Toast.makeText(context, "You don't have any sounds..", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -550,7 +557,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     }
 
-    public Integer getSoundIdByName(String audioName) {
+    public String getSoundIdByName(String audioName) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = null;
         try {
@@ -564,7 +571,7 @@ public class DbHelper extends SQLiteOpenHelper {
                     null                       // The sort order
             );
             if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+                return cursor.getString(cursor.getColumnIndexOrThrow("id"));
             }
         } catch (Exception e) {
             Log.e("DbHelper", "Error while trying to get sound ID by name", e);
@@ -614,4 +621,66 @@ public class DbHelper extends SQLiteOpenHelper {
             }
         });
     }
+
+    public void getObservationsOfUser(String userId)
+    {   deleteAllObservations();
+        int timeoutInSeconds = 30;
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual server URL
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+        AzureDbAPI service = retrofit.create(AzureDbAPI.class);
+        Call<List<ObservationSheetDto>> call = service.getObservationsByUserId(userId);
+        call.enqueue(new Callback<List<ObservationSheetDto>>() {
+            @Override
+            public void onResponse(Call<List<ObservationSheetDto>> call, Response<List<ObservationSheetDto>> response) {
+                if (response.isSuccessful()) {
+                    observationSheets = response.body();
+                    for(ObservationSheetDto sheet:observationSheets){
+                        addObservation(new ObservationSheet(sheet.getObservationDate(),sheet.getSpecies(),sheet.getNumber(),sheet.getObserver(),sheet.getUploadDate(),sheet.getLocation(),sheet.getUserId(),sheet.getSoundId()));
+                    }
+                    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+                    loadingDialogBar.hideDialog();
+                } else {
+                    // Handle possible errors, such as a 404 or 500
+                    System.err.println("Server error: " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<ObservationSheetDto>> call, Throwable t) {
+                // Handle the case where the call failed, e.g., no internet connection
+                t.printStackTrace();
+                System.err.println("Network error: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Deletes all entries from the observation_sheet table.
+     */
+    public void deleteAllObservations() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            // Execute SQL statement to delete all rows in the observation_sheet table
+            db.execSQL("DELETE FROM " + TABLE_OBSERVATION_SHEET);
+
+            // Optionally, you can reset the SQLITE_SEQUENCE table if you want to reset the autoincrement primary key
+            db.execSQL("UPDATE sqlite_sequence SET seq = 0 WHERE name = '" + TABLE_OBSERVATION_SHEET + "'");
+
+        } catch (Exception e) {
+            Log.e("DbHelper", "Error while trying to delete all observations", e);
+        } finally {
+            db.close(); // Close the database connection
+        }
+    }
+
 }

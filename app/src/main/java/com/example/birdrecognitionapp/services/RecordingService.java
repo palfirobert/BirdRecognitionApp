@@ -24,6 +24,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
+import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
 
@@ -269,7 +270,12 @@ public class RecordingService extends Service {
             audioRecord.release();
             audioRecord = null;
             recordingThread = null;
-            RecordingItem recordingItem = new RecordingItem(fileName, filePath, elapsedTimeMillis, System.currentTimeMillis(),user.getId(),"sounds/"+user.getId()+"/"+this.fileName);
+            String sound_id=user.getId()+"-"+fileName.replaceAll("[^\\d]", "");
+            System.out.println(fileName);
+            ObservationSheet.setAudioFileName(fileName);
+            RecordingItem recordingItem = new RecordingItem(fileName, filePath, elapsedTimeMillis, System.currentTimeMillis(),user.getId(),"sounds/"+user.getId()+"/"+this.fileName,sound_id);
+            ObservationSheet.setObservationDate(String.valueOf(recordingItem.getTime_added()));
+            ObservationSheet.setSoundId(sound_id);
             dbHelper.addRecording(recordingItem);
             dbHelper.addSoundToDb(recordingItem);
         }
