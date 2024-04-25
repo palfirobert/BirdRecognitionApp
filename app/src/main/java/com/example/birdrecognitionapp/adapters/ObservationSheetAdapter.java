@@ -18,7 +18,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -64,9 +67,23 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
         EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
         EditText editLocation = dialogView.findViewById(R.id.editLocation);
         try {
-            editObservationDate.setText(DateUtils.formatDateTime(context, Long.valueOf(observation.getObservationDate()),
-                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
-                            | DateUtils.FORMAT_SHOW_YEAR));
+            DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
+            if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
+                // Convert timestamp to Instant
+                Instant instant = Instant.ofEpochMilli(Long.valueOf(ObservationSheet.getObservationDate()));
+
+                // Convert Instant to LocalDateTime using system default time zone
+                LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+                // Format LocalDateTime
+                String formattedDate = dateTime.format(formatterObservationDate);
+
+                editObservationDate.setText(formattedDate);
+
+            } else {
+                LocalDateTime now = LocalDateTime.now();
+                editObservationDate.setText(now.format(formatterObservationDate));
+            }
         } catch (Exception e) {
             editObservationDate.setText(observation.getObservationDate());
         }

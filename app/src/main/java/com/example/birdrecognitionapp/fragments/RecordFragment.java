@@ -68,7 +68,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -345,7 +347,7 @@ public class RecordFragment extends Fragment {
     private void saveSelectedOption(boolean option) {
         Activity activity = getActivity();
         SessionManagerService sessionManager = new SessionManagerService(getContext());
-        int optionIntValue=option ? 1:0;
+        int optionIntValue = option ? 1 : 0;
         sessionManager.setUseLocation(optionIntValue);
         if (activity != null) {
             SharedPreferences sharedPref = activity.getSharedPreferences(PREFS_LOCATION, Context.MODE_PRIVATE);
@@ -478,7 +480,7 @@ public class RecordFragment extends Fragment {
                         String formattedDateTime = LocalDateTime.now().format(formatter);
 
                         // Set the formatted date and time to your text field
-                        editUploadDate.setText(formattedDateTime+" PM");
+                        editUploadDate.setText(formattedDateTime + " PM");
                         EditText editSpecies = dialogView.findViewById(R.id.editSpecies);
                         editSpecies.setText(species.replaceAll("[0-9%.]", ""));
 
@@ -502,27 +504,34 @@ public class RecordFragment extends Fragment {
                         editObserver.setText(user.getName() + " " + user.getSurname());
 
                         EditText editObservationDate = dialogView.findViewById(R.id.editObservationDate);
-                        System.out.println(ObservationSheet.getObservationDate());
+                        DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
                         if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
-                            editObservationDate.setText(DateUtils.formatDateTime(getContext(), Long.valueOf(ObservationSheet.getObservationDate()),
-                                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_TIME
-                                            | DateUtils.FORMAT_SHOW_YEAR));
+                            // Convert timestamp to Instant
+                            Instant instant = Instant.ofEpochMilli(Long.valueOf(ObservationSheet.getObservationDate()));
+
+                            // Convert Instant to LocalDateTime using system default time zone
+                            LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+                            // Format LocalDateTime
+                            String formattedDate = dateTime.format(formatterObservationDate);
+
+                            editObservationDate.setText(formattedDate);
+
                         } else {
                             LocalDateTime now = LocalDateTime.now();
-                            DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
                             editObservationDate.setText(now.format(formatterObservationDate));
                         }
 
-                        EditText editNumberOfSpecies=dialogView.findViewById(R.id.editNumber);
+                        EditText editNumberOfSpecies = dialogView.findViewById(R.id.editNumber);
                         // Create the AlertDialog for observation sheet
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         builder.setView(dialogView)
                                 .setTitle("Enter Observation Details")
                                 .setPositiveButton("Save", (dialog, which) -> {
                                     System.out.println(editUploadDate.getText().toString());
-                                    ObservationSheet observationSheet=new ObservationSheet(ObservationSheet.getObservationDate(),editSpecies.getText().toString(),
-                                            Integer.parseInt(editNumberOfSpecies.getText().toString()),editObserver.getText().toString(),editUploadDate.getText().toString(),
-                                            editLocation.getText().toString(),user.getId(),ObservationSheet.getSoundId(),ObservationSheet.getAudioFileName());
+                                    ObservationSheet observationSheet = new ObservationSheet(ObservationSheet.getObservationDate(), editSpecies.getText().toString(),
+                                            Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), editUploadDate.getText().toString(),
+                                            editLocation.getText().toString(), user.getId(), ObservationSheet.getSoundId(), ObservationSheet.getAudioFileName());
                                     mysqlDbHelper.addObservation(observationSheet);
                                     try {
                                         SimpleDateFormat date_formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm a");
@@ -531,12 +540,12 @@ public class RecordFragment extends Fragment {
                                         // Convert the Date to a timestamp (milliseconds since January 1, 1970, 00:00:00 GMT)
                                         Long timestamp = date.getTime();
                                         System.out.println(ObservationSheet.getAudioFileName());
-                                        String sound_id=user.getId()+"-"+ObservationSheet.getAudioFileName().replaceAll("[^\\d]", "");
-                                        ObservationSheetDto dto=new ObservationSheetDto(ObservationSheet.getObservationDate(),editSpecies.getText().toString(),
-                                                Integer.parseInt(editNumberOfSpecies.getText().toString()),editObserver.getText().toString(),timestamp.toString(),
-                                                editLocation.getText().toString(),user.getId(),sound_id);
+                                        String sound_id = user.getId() + "-" + ObservationSheet.getAudioFileName().replaceAll("[^\\d]", "");
+                                        ObservationSheetDto dto = new ObservationSheetDto(ObservationSheet.getObservationDate(), editSpecies.getText().toString(),
+                                                Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), timestamp.toString(),
+                                                editLocation.getText().toString(), user.getId(), sound_id);
                                         mysqlDbHelper.insertObservationSheet(dto);
-                                    }catch (Exception e){
+                                    } catch (Exception e) {
                                         e.printStackTrace();
                                     }
 
@@ -583,7 +592,7 @@ public class RecordFragment extends Fragment {
             SessionManagerService sessionManager = new SessionManagerService(getContext());
             userDetails = new UserDetails(sessionManager.getUserId(), sessionManager.getLanguage(), sessionManager.getUseLocation());
             boolean useLocation = userDetails.getUse_location() == 1;
-            DbHelper.firstLogin=false;
+            DbHelper.firstLogin = false;
             saveSelectedOption(useLocation);
             saveSelectedLanguage(userDetails.getLanguage());
         }
