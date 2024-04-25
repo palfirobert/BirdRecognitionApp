@@ -89,6 +89,7 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
         }
         editSpecies.setText(observation.getSpecies());
         editNumber.setText(String.valueOf(observation.getNumber()));
+        editNumber.setEnabled(false);
         editObserver.setText(observation.getObserver());
         editUploadDate.setText(observation.getUploadDate());
         editLocation.setText(observation.getLocation());
