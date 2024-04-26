@@ -208,14 +208,14 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     // Method to delete an observation from the database by ID
-    public void deleteObservation(int id) {
+    public void deleteObservation(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_OBSERVATION_SHEET, "id = ?", new String[]{String.valueOf(id)});
+        db.delete(TABLE_OBSERVATION_SHEET, COLUMN_SOUND_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
     // Method to fetch all observations from the database
-    public ArrayList<ObservationSheet> getAllObservations() {
-        ArrayList<ObservationSheet> observations = new ArrayList<>();
+    public ArrayList<ObservationSheetDto> getAllObservations() {
+        ArrayList<ObservationSheetDto> observations = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         // Updated query to order by upload_date in descending order (or any other column as needed)
         String query = "SELECT * FROM " + TABLE_OBSERVATION_SHEET;
@@ -230,7 +230,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 String uploadDate = cursor.getString(5);
                 String location = cursor.getString(6);
                 String userId = cursor.getString(7);
-                ObservationSheet observationItem = new ObservationSheet(observationDate, species, number, observer, uploadDate, location, userId);
+                ObservationSheetDto observationItem = new ObservationSheetDto(observationDate, species, number, observer, uploadDate, location, userId);
                 observations.add(observationItem);
             }
             cursor.close();
@@ -437,6 +437,45 @@ public class DbHelper extends SQLiteOpenHelper {
             }
         });
 
+    }
+
+    public void deleteObservationSheetFromDb(ObservationSheetDto observationSheetDto){
+        int timeoutInSeconds = 30;
+        //String sound_id=user.getId()+"-"+fileName.replaceAll("[^\\d]", "");
+        System.out.println(observationSheetDto.getSoundId());
+// Set up OkHttpClient with timeout settings
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
+// Set up Retrofit
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/") // Update this with your actual URL
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+        AzureDbAPI service = retrofit.create(AzureDbAPI.class);
+
+
+        Call<Void> call = service.deleteObservationSheet(observationSheetDto);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(context, "Observation deleted successfully!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Failed to delete observation.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                t.printStackTrace();
+                Toast.makeText(context, "Network error.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void unzip(String zipFilePath, String destinationDirectory) throws IOException {

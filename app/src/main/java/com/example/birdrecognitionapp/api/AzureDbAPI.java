@@ -54,4 +54,7 @@ public interface AzureDbAPI {
 
     @GET("observations/{user_id}/")
     Call<List<ObservationSheetDto>> getObservationsByUserId(@Path("user_id") String userId);
+
+    @HTTP(method = "DELETE", path = "deleteobservationsheet", hasBody = true)
+    Call<Void> deleteObservationSheet(@Body ObservationSheetDto observationSheetDto);
 }

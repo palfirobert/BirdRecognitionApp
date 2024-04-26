@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public class DateUtils {
 
@@ -21,5 +22,10 @@ public class DateUtils {
             System.err.println("Failed to parse date: " + e.getMessage());
             return -1; // Return -1 or any other error code as per your application's needs
         }
+    }
+
+    public static boolean isValidDateFormat(String str) {
+        String regex = "\\d{4}-[01]\\d-[0-3]\\d [0-2]\\d:[0-5]\\d:[0-5]\\d";
+        return Pattern.matches(regex, str);
     }
 }

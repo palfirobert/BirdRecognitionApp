@@ -159,89 +159,95 @@ public class RecordFragment extends Fragment {
         public void onReceive(Context context, Intent intent) {
             if ("RECORDING_STOPPED".equals(intent.getAction())) {
                 // Show dialog here
-                loadingDialogBar.showDialog("Predicting");
+                if (isAdded() && getActivity() != null && !getActivity().isFinishing()) {
+                    loadingDialogBar.showDialog("Predicting");
+                }
             }
         }
     };
 
     private void updateUI(List<SoundPredictionResponse> predictionList, LANGUAGE language) {
-        loadingDialogBar.hideDialog();
-        // Create a Map with common_name as key and CoiSoundPredictionResponse as value
-        Map<String, SoundPredictionResponse> map = new HashMap<>();
-        for (SoundPredictionResponse response : predictionList) {
-            map.put(response.getCommon_name(), response);
-        }
+        if (isAdded() && getActivity() != null && !getActivity().isFinishing()) {
+            loadingDialogBar.hideDialog();
+            // Create a Map with common_name as key and CoiSoundPredictionResponse as value
+            Map<String, SoundPredictionResponse> map = new HashMap<>();
+            for (SoundPredictionResponse response : predictionList) {
+                map.put(response.getCommon_name(), response);
+            }
 
-        distinctPredictionList = new ArrayList(map.values());
-        prediction_urls = new ArrayList<>();
-        Collections.sort(distinctPredictionList, Collections.reverseOrder());
+            distinctPredictionList = new ArrayList(map.values());
+            prediction_urls = new ArrayList<>();
+            Collections.sort(distinctPredictionList, Collections.reverseOrder());
+            if (language.equals(LANGUAGE.RO)) {
+                distinctPredictionList.parallelStream().forEach(prediction ->
+                        prediction.setCommon_name(dbHelper.getCommonNameByLatinName(prediction.getScientific_name())));
+                distinctPredictionList.stream().forEach(prediction ->
+                        prediction_urls.add(dbHelper.getUrlByLatinName(prediction.getScientific_name())));
+                System.out.println(prediction_urls);
+            } else {
+                distinctPredictionList.stream().forEach(prediction ->
+                        prediction_urls.add(null));
+            }
 
-        if (language.equals(LANGUAGE.RO)) {
-            distinctPredictionList.parallelStream().forEach(prediction ->
-                    prediction.setCommon_name(dbHelper.getCommonNameByLatinName(prediction.getScientific_name())));
-            distinctPredictionList.stream().forEach(prediction ->
-                    prediction_urls.add(dbHelper.getUrlByLatinName(prediction.getScientific_name())));
-            System.out.println(prediction_urls);
-        } else {
-            distinctPredictionList.stream().forEach(prediction ->
-                    prediction_urls.add(null));
-        }
-
-        if (distinctPredictionList.size() != 0)
-            for (int i = 0; i < distinctPredictionList.size(); i++) {
-                switch (i) {
-                    case 0:
-                        predictionButtonOne.setVisibility(View.VISIBLE);
-                        predictionButtonOne.setText(
-                                String.valueOf(distinctPredictionList.get(0).getCommon_name()) + " " +
-                                        String.format("%.2f", distinctPredictionList.get(0).getConfidence() * 100) + "%"
-                        );
-                        break;
-                    case 1:
-                        predictionButtonTwo.setVisibility(View.VISIBLE);
-                        predictionButtonTwo.setText(
-                                String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
-                                        String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
-                        );
-                        break;
-                    case 2:
-                        predictionButtonThree.setVisibility(View.VISIBLE);
-                        predictionButtonThree.setText(
-                                String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
-                                        String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
-                        );
-                        break;
-                    // Handle additional cases if needed
+            if (distinctPredictionList.size() != 0)
+                for (int i = 0; i < distinctPredictionList.size(); i++) {
+                    switch (i) {
+                        case 0:
+                            predictionButtonOne.setVisibility(View.VISIBLE);
+                            predictionButtonOne.setText(
+                                    String.valueOf(distinctPredictionList.get(0).getCommon_name()) + " " +
+                                            String.format("%.2f", distinctPredictionList.get(0).getConfidence() * 100) + "%"
+                            );
+                            break;
+                        case 1:
+                            predictionButtonTwo.setVisibility(View.VISIBLE);
+                            predictionButtonTwo.setText(
+                                    String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
+                                            String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
+                            );
+                            break;
+                        case 2:
+                            predictionButtonThree.setVisibility(View.VISIBLE);
+                            predictionButtonThree.setText(
+                                    String.valueOf(distinctPredictionList.get(i).getCommon_name()) + " " +
+                                            String.format("%.2f", distinctPredictionList.get(i).getConfidence() * 100) + "%"
+                            );
+                            break;
+                        // Handle additional cases if needed
+                    }
+                }
+            else {
+                predictionButtonOne.setVisibility(View.VISIBLE);
+                if (language.equals(LANGUAGE.EN))
+                    predictionButtonOne.setText("No match found :(");
+                else {
+                    predictionButtonOne.setText("Nu s-a putut prezice :(");
                 }
             }
-        else {
-            predictionButtonOne.setVisibility(View.VISIBLE);
-            if (language.equals(LANGUAGE.EN))
-                predictionButtonOne.setText("No match found :(");
-            else {
-                predictionButtonOne.setText("Nu s-a putut prezice :(");
-            }
+
+            vibratePhone();
         }
 
-        vibratePhone();
     }
 
     private void vibratePhone() {
-        // Get the Vibrator service
-        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null) {
-            // Check if the device has a vibrator
-            if (vibrator.hasVibrator()) {
-                // Vibrate for 500 milliseconds
-                // For API 26 or above
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE));
+        if (isAdded() && getActivity() != null) {
+            // Get the Vibrator service
+            Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator != null) {
+                // Check if the device has a vibrator
+                if (vibrator.hasVibrator()) {
+                    // Vibrate for 500 milliseconds
+                    // For API 26 or above
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        vibrator.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE));
+                    } else {
+                        // Deprecated in API 26
+                        vibrator.vibrate(300);
+                    }
                 } else {
-                    // Deprecated in API 26
-                    vibrator.vibrate(300);
+                    Toast.makeText(getContext(), "No vibrator found on device.", Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(getContext(), "No vibrator found on device.", Toast.LENGTH_SHORT).show();
             }
         }
     }

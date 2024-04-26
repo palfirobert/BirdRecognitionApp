@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.adapters.ObservationSheetAdapter;
 import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.dto.ObservationSheetDto;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class ObservationSheetFragment extends Fragment {
     RecyclerView recyclerViewObservationSheet;
 
     private DbHelper dbHelper;
-    private ArrayList<ObservationSheet> listObservations;
+    private ArrayList<ObservationSheetDto> listObservations;
     private ObservationSheetAdapter observationSheetAdapter;
 
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
