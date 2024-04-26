@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.birdrecognitionapp.database.DbHelper;
 import com.example.birdrecognitionapp.dto.DeleteSoundDto;
 import com.example.birdrecognitionapp.dto.ObservationSheetDto;
+import com.example.birdrecognitionapp.interfaces.OnDatabaseChangedListener;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 
@@ -35,7 +36,7 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationSheetAdapter.ViewHolder> {
+public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationSheetAdapter.ViewHolder> implements OnDatabaseChangedListener {
 
     private Context context;
     private ArrayList<ObservationSheetDto> observationList;
@@ -45,6 +46,7 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
         this.context = context;
         this.observationList = observationList;
         dbHelper = new DbHelper(context);
+        DbHelper.setOnDatabaseChangedListener(this);
     }
 
     @NonNull
@@ -111,6 +113,16 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
         dialog.show();
     }
 
+    @Override
+    public void onNewDatabaseEntryAdded(RecordingItem recordingItem) {
+
+    }
+
+    @Override
+    public void onDatabaseEntryDeleted() {
+
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
         TextView fileNameText;
@@ -148,6 +160,7 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
                             dbHelper.deleteObservation(itemToDelete.getSoundId());
                             dbHelper.deleteObservationSheetFromDb(itemToDelete);
                             observationList.remove(getAdapterPosition());
+                            notifyItemRemoved(getAdapterPosition());
                             return true;
                         default:
                             return false;

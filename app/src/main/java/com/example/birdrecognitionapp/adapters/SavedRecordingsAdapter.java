@@ -51,7 +51,6 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
         this.list = list;
         this.linearLayoutManager = linearLayoutManager;
         dbHelper = new DbHelper(context);
-
         DbHelper.setOnDatabaseChangedListener(this);
     }
 

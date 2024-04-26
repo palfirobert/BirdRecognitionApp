@@ -230,7 +230,8 @@ public class DbHelper extends SQLiteOpenHelper {
                 String uploadDate = cursor.getString(5);
                 String location = cursor.getString(6);
                 String userId = cursor.getString(7);
-                ObservationSheetDto observationItem = new ObservationSheetDto(observationDate, species, number, observer, uploadDate, location, userId);
+                String sound_id=cursor.getString(8);
+                ObservationSheetDto observationItem = new ObservationSheetDto(observationDate, species, number, observer, uploadDate, location, userId,sound_id);
                 observations.add(observationItem);
             }
             cursor.close();
