@@ -339,7 +339,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // Build the Retrofit instance
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Adjust the base URL as necessary
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -453,7 +453,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
 // Set up Retrofit
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Update this with your actual URL
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Update this with your actual URL
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
                 .build();
@@ -632,7 +632,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual server URL
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual server URL
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
                 .build();
@@ -672,7 +672,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/") // Replace with your actual server URL
+                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual server URL
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
                 .build();

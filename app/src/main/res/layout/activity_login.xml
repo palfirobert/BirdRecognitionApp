@@ -40,22 +40,40 @@
             android:inputType="textPassword"
             android:padding="8dp" />
 
-        <Button
-            android:id="@+id/login_button"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Login"
-            android:textSize="18sp"
-            app:cornerRadius="30dp" />
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <!-- Existing login button -->
+            <Button
+                android:id="@+id/login_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Login"
+                android:textSize="18sp"
+                app:cornerRadius="30dp" />
+
+            <!-- New signup button -->
+            <Button
+                android:id="@+id/signup_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Sign up"
+                android:textSize="18sp"
+                app:cornerRadius="30dp" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/signupRedirectText"
+            android:id="@+id/forgot_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="16dp"
-            android:text="Not yet registered? Signup"
+            android:text="Forgot password?"
             android:textColor="@color/lavender"
             android:textSize="18sp" />
     </LinearLayout>

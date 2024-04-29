@@ -53,8 +53,11 @@ public class LoginActivity extends AppCompatActivity {
     @BindView(R.id.login_button)
     Button loginButton;
 
-    @BindView(R.id.signupRedirectText)
-    TextView signupRedirectText;
+    @BindView(R.id.signup_button)
+    Button signupButton;
+
+    @BindView(R.id.forgot_password)
+    TextView forgotPassword;
 
     User user;
 
@@ -157,7 +160,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
-        signupRedirectText.setOnClickListener(new View.OnClickListener() {
+        signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
