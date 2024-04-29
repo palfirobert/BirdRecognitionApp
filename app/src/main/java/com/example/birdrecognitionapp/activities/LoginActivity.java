@@ -7,9 +7,12 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.api.AzureDbAPI;
+import com.example.birdrecognitionapp.api.RetrofitAPI;
 import com.example.birdrecognitionapp.database.DbHelper;
+import com.example.birdrecognitionapp.dto.ChangePasswordDto;
 import com.example.birdrecognitionapp.dto.LoginReq;
 import com.example.birdrecognitionapp.dto.LoginResponse;
+import com.example.birdrecognitionapp.dto.SecurityCodeDto;
 import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.User;
 import com.example.birdrecognitionapp.models.UserDetails;
@@ -19,24 +22,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -65,7 +76,11 @@ public class LoginActivity extends AppCompatActivity {
 
     LoadingDialogBar dialogBar;
 
+    Integer securityCode;
+    String email;
+
     public static final int REQUEST_AUDIO_PERMISSION_CODE = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,7 +90,7 @@ public class LoginActivity extends AppCompatActivity {
         if (!CheckPermissions())
             RequestPermissions();
 
-        dialogBar=new LoadingDialogBar(this);
+        dialogBar = new LoadingDialogBar(this);
         dbHelper = new DbHelper(getApplicationContext());
         SessionManagerService sessionManager = new SessionManagerService(this);
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -125,7 +140,7 @@ public class LoginActivity extends AppCompatActivity {
                                                 loginResponse.getLanguage(),
                                                 loginResponse.getUse_location()
                                         );
-                                        user=new User(loginResponse.getUser_id(),loginResponse.getName(),loginResponse.getSurname(),loginResponse.getEmail(),loginResponse.getPassword());
+                                        user = new User(loginResponse.getUser_id(), loginResponse.getName(), loginResponse.getSurname(), loginResponse.getEmail(), loginResponse.getPassword());
 
                                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                                         System.out.println(userDetails.getUse_location());
@@ -139,11 +154,12 @@ public class LoginActivity extends AppCompatActivity {
                                         sessionManager.setPassword(user.getPassword());
                                         sessionManager.setName(user.getName());
                                         dialogBar.hideDialog();
-                                        DbHelper.firstLogin=true;
+                                        DbHelper.firstLogin = true;
                                         startActivity(intent);
                                     }
                                 }
                             } else {
+                                dialogBar.hideDialog();
                                 Toast.makeText(LoginActivity.this, "Invalid credentials.", Toast.LENGTH_SHORT).show();
                             }
                         }
@@ -155,6 +171,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
 
+
                 }
             }
         });
@@ -165,6 +182,230 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
                 startActivity(intent);
+            }
+        });
+
+        forgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showForgotPasswordDialog();
+            }
+        });
+    }
+
+    private void showForgotPasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Reset Password");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        input.setHint("Enter your email");
+        builder.setView(input);
+
+        // Define the email pattern
+        final Pattern EMAIL_PATTERN = Pattern.compile(
+                "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
+                        "\\@" +
+                        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+                        "(" +
+                        "\\." +
+                        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+                        ")+"
+        );
+
+        // Set up the buttons
+        builder.setPositiveButton("Send", null);  // Listener is null initially to avoid automatic dismissal
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(dialogInterface -> {
+            Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            button.setOnClickListener(view -> {
+                email = input.getText().toString();
+                Matcher matcher = EMAIL_PATTERN.matcher(email);
+                if (matcher.matches()) {
+                    dialog.dismiss();  // Only dismiss the dialog if the email is valid
+                    sendResetCode(email);  // Implement this to send the reset code
+                } else {
+                    Toast.makeText(LoginActivity.this, "Please enter a valid email address.", Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void sendResetCode(String email) {
+        Random random = new Random();
+        securityCode = 1000 + random.nextInt(9000);
+        sendSecurityCodeToEmail(email);
+
+        // Set up the dialog for the code entry
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Code");
+
+        // Set up the code input
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Enter the 4-digit code");
+        builder.setView(input);
+
+        builder.setPositiveButton("Verify", null); // Initially set to null to prevent automatic dismissal
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        String code = input.getText().toString();
+                        if (code.equals(String.valueOf(securityCode))) {
+                            dialog.dismiss(); // Close the dialog only if the code is correct
+                            showChangePasswordDialog();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Incorrect security code", Toast.LENGTH_SHORT).show();
+                            // Do not dismiss the dialog, allowing the user to try again
+                        }
+                    }
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
+
+    private void verifyCode(String inputCode) {
+        if (inputCode.equals(String.valueOf(securityCode))) {
+            showChangePasswordDialog();
+        } else {
+            Toast.makeText(LoginActivity.this, "Incorrect security code", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showChangePasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Set New Password");
+
+        // Set up the layout
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        // Set up the New Password input
+        final EditText newPasswordInput = new EditText(this);
+        newPasswordInput.setHint("New Password");
+        newPasswordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(newPasswordInput);
+
+        // Set up the Confirm Password input
+        final EditText confirmPasswordInput = new EditText(this);
+        confirmPasswordInput.setHint("Confirm Password");
+        confirmPasswordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(confirmPasswordInput);
+
+        builder.setView(layout);
+
+        // Set up the buttons
+        builder.setPositiveButton("Change password", null);  // Listener set to null to manage manually
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        String newPassword = newPasswordInput.getText().toString();
+                        String confirmPassword = confirmPasswordInput.getText().toString();
+
+                        if (!newPassword.isEmpty() && newPassword.equals(confirmPassword)) {
+                            dialog.dismiss();
+                            updatePassword(newPassword);
+                        } else if (newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                            Toast.makeText(LoginActivity.this, "Password fields cannot be empty", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
+
+    private void updatePassword(String newPassword) {
+        int timeoutInSeconds = 30;
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/")  // Adjust the base URL as necessary
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+        AzureDbAPI service = retrofit.create(AzureDbAPI.class);
+        Call<ResponseBody> call = service.updatePassword(new ChangePasswordDto(email, newPassword));
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(LoginActivity.this, "Password updated successfully.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Failed to update password.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(LoginActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    private void sendSecurityCodeToEmail(String email) {
+        int timeoutInSeconds = 30;
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/")  // Adjust the base URL as necessary
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+        RetrofitAPI service = retrofit.create(RetrofitAPI.class);
+        Call<ResponseBody> call = service.sendSecurityCode(new SecurityCodeDto(email, securityCode));
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(LoginActivity.this, "Security code sent to your email.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Failed to send security code.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(LoginActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

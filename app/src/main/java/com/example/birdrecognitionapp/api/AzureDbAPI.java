@@ -1,5 +1,6 @@
 package com.example.birdrecognitionapp.api;
 
+import com.example.birdrecognitionapp.dto.ChangePasswordDto;
 import com.example.birdrecognitionapp.dto.DeleteSoundDto;
 import com.example.birdrecognitionapp.dto.GetUserSoundsDto;
 import com.example.birdrecognitionapp.dto.LoginReq;
@@ -57,4 +58,8 @@ public interface AzureDbAPI {
 
     @HTTP(method = "DELETE", path = "deleteobservationsheet", hasBody = true)
     Call<Void> deleteObservationSheet(@Body ObservationSheetDto observationSheetDto);
+
+    @POST("update_password")
+    Call<ResponseBody> updatePassword(@Body ChangePasswordDto changePasswordDto);
+
 }

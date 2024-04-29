@@ -482,11 +482,11 @@ public class RecordFragment extends Fragment {
 
                         EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
                         // Format the current date and time
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm");
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
                         String formattedDateTime = LocalDateTime.now().format(formatter);
 
                         // Set the formatted date and time to your text field
-                        editUploadDate.setText(formattedDateTime + " PM");
+                        editUploadDate.setText(formattedDateTime);
                         EditText editSpecies = dialogView.findViewById(R.id.editSpecies);
                         editSpecies.setText(species.replaceAll("[0-9%.]", ""));
 
@@ -533,7 +533,14 @@ public class RecordFragment extends Fragment {
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         builder.setView(dialogView)
                                 .setTitle("Enter Observation Details")
-                                .setPositiveButton("Save", (dialog, which) -> {
+                                .setPositiveButton("Save", null)
+                                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+                        AlertDialog dialog = builder.create();
+                        dialog.setOnShowListener(dialogInterface -> {
+                            Button button=dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                            button.setOnClickListener(view1 -> {
+                                if(!editNumberOfSpecies.getText().toString().equals("")) {
                                     System.out.println(editUploadDate.getText().toString());
                                     ObservationSheet observationSheet = new ObservationSheet(ObservationSheet.getObservationDate(), editSpecies.getText().toString(),
                                             Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), editUploadDate.getText().toString(),
@@ -551,14 +558,16 @@ public class RecordFragment extends Fragment {
                                                 Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), timestamp.toString(),
                                                 editLocation.getText().toString(), user.getId(), sound_id);
                                         mysqlDbHelper.insertObservationSheet(dto);
+                                        dialog.dismiss();
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
-
-                                })
-                                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-
-                        AlertDialog dialog = builder.create();
+                                }else
+                                {
+                                    Toast.makeText(getContext(), "Insert number of species", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        });
                         dialog.show();
                         return true;
                     default:
