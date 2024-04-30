@@ -96,12 +96,13 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                dialogBar.showDialog("Logging in...");
+                if (CheckPermissions())
+                {dialogBar.showDialog("Logging in...");
                 String email = loginEmail.getText().toString();
                 String password = loginPassword.getText().toString();
-                if (email.equals("") || password.equals(""))
+                if (email.equals("") || password.equals("")){
                     Toast.makeText(LoginActivity.this, "All fields are mandatory", Toast.LENGTH_SHORT).show();
+                    dialogBar.hideDialog();}
                 else {
 
                     OkHttpClient okHttpClient = new OkHttpClient.Builder()
@@ -173,7 +174,12 @@ public class LoginActivity extends AppCompatActivity {
 
 
                 }
+            }else{
+                    Toast.makeText(getApplicationContext(), "You need to allow every permission!", Toast.LENGTH_SHORT).show();
+                    RequestPermissions();
+                }
             }
+            
         });
 
 
@@ -350,7 +356,7 @@ public class LoginActivity extends AppCompatActivity {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/")  // Adjust the base URL as necessary
+                .baseUrl("http://palfirobert.pythonanywhere.com")  // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
                 .build();
@@ -385,7 +391,7 @@ public class LoginActivity extends AppCompatActivity {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/")  // Adjust the base URL as necessary
+                .baseUrl("http://palfirobert.pythonanywhere.com")  // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
                 .build();

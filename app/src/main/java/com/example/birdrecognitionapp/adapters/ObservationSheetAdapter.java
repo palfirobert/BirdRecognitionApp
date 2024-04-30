@@ -59,6 +59,7 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ObservationSheetDto observation = observationList.get(position);
+//        System.out.println(observation.toString());
         holder.fileNameText.setText(observation.getSpecies());
         holder.fileTimeAdded.setText(observation.getUploadDate());
     }
@@ -67,7 +68,6 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
     public int getItemCount() {
         return observationList.size();
     }
-
 
 
     @Override
@@ -83,7 +83,6 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
     public class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
         TextView fileNameText;
-        TextView audioFileName;
         TextView fileTimeAdded;
         @BindView(R.id.card_view)
         View cardView;
@@ -110,6 +109,7 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
                 }
             });
         }
+
         private void showOptionsPopupMenu(View view) {
             PopupMenu popup = new PopupMenu(context, view);
             // Inflate the menu from xml
@@ -138,34 +138,31 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_observation_sheet, null);
             builder.setView(dialogView);
-
+            //System.out.println(observation.toString());
             EditText editObservationDate = dialogView.findViewById(R.id.editObservationDate);
             EditText editSpecies = dialogView.findViewById(R.id.editSpecies);
             EditText editNumber = dialogView.findViewById(R.id.editNumber);
             EditText editObserver = dialogView.findViewById(R.id.editObserver);
             EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
             EditText editLocation = dialogView.findViewById(R.id.editLocation);
-            try {
-                DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
-                if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
-                    // Convert timestamp to Instant
-                    Instant instant = Instant.ofEpochMilli(Long.valueOf(ObservationSheet.getObservationDate()));
-
-                    // Convert Instant to LocalDateTime using system default time zone
-                    LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-
-                    // Format LocalDateTime
-                    String formattedDate = dateTime.format(formatterObservationDate);
-
-                    editObservationDate.setText(formattedDate);
-
-                } else {
-                    LocalDateTime now = LocalDateTime.now();
-                    editObservationDate.setText(now.format(formatterObservationDate));
-                }
-            } catch (Exception e) {
-                editObservationDate.setText(observation.getObservationDate());
-            }
+//            DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
+//            try {
+//                // Convert timestamp to Instant
+//                Instant instant = Instant.ofEpochMilli(Long.valueOf(ObservationSheet.getObservationDate()));
+//
+//                // Convert Instant to LocalDateTime using system default time zone
+//                LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+//
+//                // Format LocalDateTime
+//                String formattedDate = dateTime.format(formatterObservationDate);
+//
+//                editObservationDate.setText(formattedDate);
+//
+//
+//            } catch (Exception e) {
+//                editObservationDate.setText(observation.getObservationDate());
+//            }
+            editObservationDate.setText(observation.getObservationDate());
             editSpecies.setText(observation.getSpecies());
             editNumber.setText(String.valueOf(observation.getNumber()));
             editNumber.setEnabled(false);

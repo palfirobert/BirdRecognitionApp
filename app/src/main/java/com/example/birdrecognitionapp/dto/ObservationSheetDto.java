@@ -93,4 +93,18 @@ public class ObservationSheetDto {
     public void setSoundId(String soundId) {
         this.soundId = soundId;
     }
+
+    @Override
+    public String toString() {
+        return "ObservationSheetDto{" +
+                "observationDate='" + observationDate + '\'' +
+                ", species='" + species + '\'' +
+                ", number=" + number +
+                ", observer='" + observer + '\'' +
+                ", uploadDate='" + uploadDate + '\'' +
+                ", location='" + location + '\'' +
+                ", userId='" + userId + '\'' +
+                ", soundId='" + soundId + '\'' +
+                '}';
+    }
 }

@@ -482,7 +482,7 @@ public class RecordFragment extends Fragment {
 
                         EditText editUploadDate = dialogView.findViewById(R.id.editUploadDate);
                         // Format the current date and time
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         String formattedDateTime = LocalDateTime.now().format(formatter);
 
                         // Set the formatted date and time to your text field
@@ -510,7 +510,7 @@ public class RecordFragment extends Fragment {
                         editObserver.setText(user.getName() + " " + user.getSurname());
 
                         EditText editObservationDate = dialogView.findViewById(R.id.editObservationDate);
-                        DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm a");
+                        DateTimeFormatter formatterObservationDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         if (ObservationSheet.getCalledFromSavedRecordingAdapter()) {
                             // Convert timestamp to Instant
                             Instant instant = Instant.ofEpochMilli(Long.valueOf(ObservationSheet.getObservationDate()));
@@ -541,20 +541,25 @@ public class RecordFragment extends Fragment {
                             Button button=dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                             button.setOnClickListener(view1 -> {
                                 if(!editNumberOfSpecies.getText().toString().equals("")) {
-                                    System.out.println(editUploadDate.getText().toString());
-                                    ObservationSheet observationSheet = new ObservationSheet(ObservationSheet.getObservationDate(), editSpecies.getText().toString(),
+                                    String initialObservationDate=ObservationSheet.getObservationDate();
+                                    Date date1 = new Date(Long.parseLong(ObservationSheet.getObservationDate()));
+                                    // Create a SimpleDateFormat instance with your desired format
+                                    SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                                    String formattedDate = formatter1.format(date1);
+                                    ObservationSheet observationSheet = new ObservationSheet(formattedDate, editSpecies.getText().toString(),
                                             Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), editUploadDate.getText().toString(),
                                             editLocation.getText().toString(), user.getId(), ObservationSheet.getSoundId(), ObservationSheet.getAudioFileName());
                                     mysqlDbHelper.addObservation(observationSheet);
                                     try {
-                                        SimpleDateFormat date_formatter = new SimpleDateFormat("yyyy-MM-dd, HH:mm a");
+                                        SimpleDateFormat date_formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                                         // Parse the date string into a Date object
                                         Date date = date_formatter.parse(editUploadDate.getText().toString());
                                         // Convert the Date to a timestamp (milliseconds since January 1, 1970, 00:00:00 GMT)
                                         Long timestamp = date.getTime();
-                                        System.out.println(ObservationSheet.getAudioFileName());
+
                                         String sound_id = user.getId() + "-" + ObservationSheet.getAudioFileName().replaceAll("[^\\d]", "");
-                                        ObservationSheetDto dto = new ObservationSheetDto(ObservationSheet.getObservationDate(), editSpecies.getText().toString(),
+                                        ObservationSheetDto dto = new ObservationSheetDto(initialObservationDate, editSpecies.getText().toString(),
                                                 Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), timestamp.toString(),
                                                 editLocation.getText().toString(), user.getId(), sound_id);
                                         mysqlDbHelper.insertObservationSheet(dto);
