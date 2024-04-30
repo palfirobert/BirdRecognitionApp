@@ -96,90 +96,89 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (CheckPermissions())
-                {dialogBar.showDialog("Logging in...");
-                String email = loginEmail.getText().toString();
-                String password = loginPassword.getText().toString();
-                if (email.equals("") || password.equals("")){
-                    Toast.makeText(LoginActivity.this, "All fields are mandatory", Toast.LENGTH_SHORT).show();
-                    dialogBar.hideDialog();}
-                else {
+                if (CheckPermissions()) {
+                    dialogBar.showDialog("Logging in...");
+                    String email = loginEmail.getText().toString();
+                    String password = loginPassword.getText().toString();
+                    if (email.equals("") || password.equals("")) {
+                        Toast.makeText(LoginActivity.this, "All fields are mandatory", Toast.LENGTH_SHORT).show();
+                        dialogBar.hideDialog();
+                    } else {
+                        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                                .connectTimeout(30, TimeUnit.SECONDS) // Set the connection timeout
+                                .readTimeout(30, TimeUnit.SECONDS) // Set the read timeout
+                                .writeTimeout(30, TimeUnit.SECONDS) // Set the write timeout
+                                .build();
 
-                    OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                            .connectTimeout(30, TimeUnit.SECONDS) // Set the connection timeout
-                            .readTimeout(30, TimeUnit.SECONDS) // Set the read timeout
-                            .writeTimeout(30, TimeUnit.SECONDS) // Set the write timeout
-                            .build();
+                        // Use the custom OkHttpClient in your Retrofit builder
+                        Retrofit retrofit = new Retrofit.Builder()
+                                .baseUrl("http://palfirobert.pythonanywhere.com") // Your base URL
+                                .addConverterFactory(GsonConverterFactory.create())
+                                .client(okHttpClient) // Set the custom client here
+                                .build();
+                        // Prepare the login request
+                        LoginReq loginReq = new LoginReq(email, password);
 
-                    // Use the custom OkHttpClient in your Retrofit builder
-                    Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl("http://palfirobert.pythonanywhere.com") // Your base URL
-                            .addConverterFactory(GsonConverterFactory.create())
-                            .client(okHttpClient) // Set the custom client here
-                            .build();
-                    // Prepare the login request
-                    LoginReq loginReq = new LoginReq(email, password);
+                        // Get the Retrofit instance and prepare the call
+                        AzureDbAPI azureDbAPI = retrofit.create(AzureDbAPI.class);
+                        Call<LoginResponse> call = azureDbAPI.loginUser(loginReq);
 
-                    // Get the Retrofit instance and prepare the call
-                    AzureDbAPI azureDbAPI = retrofit.create(AzureDbAPI.class);
-                    Call<LoginResponse> call = azureDbAPI.loginUser(loginReq);
+                        // Execute the call asynchronously
+                        call.enqueue(new Callback<LoginResponse>() {
+                            @Override
+                            public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                                if (response.isSuccessful()) {
+                                    LoginResponse loginResponse = response.body();
+                                    if (loginResponse != null) {
+                                        if (loginResponse.getError() != null) {
+                                            Toast.makeText(LoginActivity.this, loginResponse.getError(), Toast.LENGTH_SHORT).show();
+                                        } else if (loginResponse.getMessage() != null) {
+                                            Toast.makeText(LoginActivity.this, "Login Successfully!", Toast.LENGTH_SHORT).show();
+                                            // Populate the UserDetails object
+                                            UserDetails userDetails = new UserDetails(
+                                                    loginResponse.getUser_id(),
+                                                    loginResponse.getLanguage(),
+                                                    loginResponse.getUse_location()
+                                            );
+                                            user = new User(loginResponse.getUser_id(), loginResponse.getName(), loginResponse.getSurname(), loginResponse.getEmail(), loginResponse.getPassword());
 
-                    // Execute the call asynchronously
-                    call.enqueue(new Callback<LoginResponse>() {
-                        @Override
-                        public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                            if (response.isSuccessful()) {
-                                LoginResponse loginResponse = response.body();
-                                if (loginResponse != null) {
-                                    if (loginResponse.getError() != null) {
-                                        Toast.makeText(LoginActivity.this, loginResponse.getError(), Toast.LENGTH_SHORT).show();
-                                    } else if (loginResponse.getMessage() != null) {
-                                        Toast.makeText(LoginActivity.this, "Login Successfully!", Toast.LENGTH_SHORT).show();
-                                        // Populate the UserDetails object
-                                        UserDetails userDetails = new UserDetails(
-                                                loginResponse.getUser_id(),
-                                                loginResponse.getLanguage(),
-                                                loginResponse.getUse_location()
-                                        );
-                                        user = new User(loginResponse.getUser_id(), loginResponse.getName(), loginResponse.getSurname(), loginResponse.getEmail(), loginResponse.getPassword());
-
-                                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                                        System.out.println(userDetails.getUse_location());
-                                        System.out.println(userDetails.getLanguage());
-                                        sessionManager.setLogin(true);
-                                        sessionManager.setUseLocation(userDetails.getUse_location());
-                                        sessionManager.setLanguage(userDetails.getLanguage());
-                                        sessionManager.setUserId(userDetails.getUser_id());
-                                        sessionManager.setSurname(user.getSurname());
-                                        sessionManager.setEmail(user.getEmail());
-                                        sessionManager.setPassword(user.getPassword());
-                                        sessionManager.setName(user.getName());
-                                        dialogBar.hideDialog();
-                                        DbHelper.firstLogin = true;
-                                        startActivity(intent);
+                                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                                            System.out.println(userDetails.getUse_location());
+                                            System.out.println(userDetails.getLanguage());
+                                            sessionManager.setLogin(true);
+                                            sessionManager.setUseLocation(userDetails.getUse_location());
+                                            sessionManager.setLanguage(userDetails.getLanguage());
+                                            sessionManager.setUserId(userDetails.getUser_id());
+                                            sessionManager.setSurname(user.getSurname());
+                                            sessionManager.setEmail(user.getEmail());
+                                            sessionManager.setPassword(user.getPassword());
+                                            sessionManager.setName(user.getName());
+                                            dialogBar.hideDialog();
+                                            DbHelper.firstLogin = true;
+                                            startActivity(intent);
+                                        }
                                     }
+                                } else {
+                                    dialogBar.hideDialog();
+                                    Toast.makeText(LoginActivity.this, "Invalid credentials.", Toast.LENGTH_SHORT).show();
                                 }
-                            } else {
-                                dialogBar.hideDialog();
-                                Toast.makeText(LoginActivity.this, "Invalid credentials.", Toast.LENGTH_SHORT).show();
                             }
-                        }
 
-                        @Override
-                        public void onFailure(Call<LoginResponse> call, Throwable t) {
-                            Toast.makeText(LoginActivity.this, "Server error.", Toast.LENGTH_SHORT).show();
-                            System.out.println(t.getMessage());
-                        }
-                    });
+                            @Override
+                            public void onFailure(Call<LoginResponse> call, Throwable t) {
+                                Toast.makeText(LoginActivity.this, "Server error.", Toast.LENGTH_SHORT).show();
+                                System.out.println(t.getMessage());
+                            }
+                        });
 
 
-                }
-            }else{
+                    }
+                } else {
                     Toast.makeText(getApplicationContext(), "You need to allow every permission!", Toast.LENGTH_SHORT).show();
                     RequestPermissions();
                 }
             }
-            
+
         });
 
 

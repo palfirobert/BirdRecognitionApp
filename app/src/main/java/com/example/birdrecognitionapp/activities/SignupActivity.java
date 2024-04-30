@@ -4,6 +4,8 @@ import com.example.birdrecognitionapp.R;
 import com.example.birdrecognitionapp.api.AzureDbAPI;
 import com.example.birdrecognitionapp.dto.SignupReq;
 import com.example.birdrecognitionapp.dto.SignupResponse;
+import com.example.birdrecognitionapp.models.LoadingDialogBar;
+
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -45,16 +47,19 @@ public class SignupActivity extends AppCompatActivity {
     @BindView(R.id.loginRedirectText)
     TextView loginRedirectText;
 
+    LoadingDialogBar loadingDialogBar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
         ButterKnife.bind(this);
-
+        loadingDialogBar=new LoadingDialogBar(this);
         signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loadingDialogBar.showDialog("Signing up...");
                 String email = signupEmail.getText().toString();
                 String password = signupPassword.getText().toString();
                 String confirmPassword = signupConfirmPassword.getText().toString();
@@ -105,11 +110,13 @@ public class SignupActivity extends AppCompatActivity {
                             } else {
                                 Toast.makeText(SignupActivity.this, "Signup failed. Try again.", Toast.LENGTH_SHORT).show();
                             }
+                            loadingDialogBar.hideDialog();
                         }
 
                         @Override
                         public void onFailure(Call<SignupResponse> call, Throwable t) {
                             Toast.makeText(SignupActivity.this, "Server error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                            loadingDialogBar.hideDialog();
                         }
                     });
 

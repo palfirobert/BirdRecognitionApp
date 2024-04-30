@@ -217,8 +217,8 @@ public class DbHelper extends SQLiteOpenHelper {
     public ArrayList<ObservationSheetDto> getAllObservations() {
         ArrayList<ObservationSheetDto> observations = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
-        // Updated query to order by upload_date in descending order (or any other column as needed)
-        String query = "SELECT * FROM " + TABLE_OBSERVATION_SHEET;
+
+        String query = "SELECT * FROM " + TABLE_OBSERVATION_SHEET+ " ORDER BY observation_date DESC";
         Cursor cursor = db.rawQuery(query, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -417,7 +417,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
                         // Optionally, delete the ZIP file after extraction
                         zipFile.delete();
-
                         Toast.makeText(context, "Successfully fetched sounds!", Toast.LENGTH_SHORT).show();
                         System.out.println("++++++++++++++++++++++++++++++++++++");
                         getObservationsOfUser(user.getId());
@@ -427,9 +426,13 @@ public class DbHelper extends SQLiteOpenHelper {
                     }
                 } else {
                     Log.e("DownloadError", "Server contacted but unable to retrieve content");
+                    System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                    System.out.println((new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/").getPath()));
                     getObservationsOfUser(user.getId());
                     Toast.makeText(context, "You don't have any sounds..", Toast.LENGTH_SHORT).show();
                 }
+                loadingDialogBar.hideDialog();
+                loadingDialogBar.showDialog("Fetching observations...");
             }
 
             @Override
@@ -513,14 +516,20 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void clearDirectory(File dir) {
-        if (dir.exists() && dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    deleteRecording("/storage/emulated/0/soundrecordings/" + file.getName());
+        ExecutorService executorService=Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (dir.exists() && dir.isDirectory()) {
+                    File[] files = dir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            deleteRecording("/storage/emulated/0/soundrecordings/" + file.getName());
+                        }
+                    }
                 }
             }
-        }
+        });
     }
 
     public void deleteSoundFromBlob(DeleteSoundDto soundDto) {
@@ -688,11 +697,11 @@ public class DbHelper extends SQLiteOpenHelper {
                         addObservation(new ObservationSheet(sheet.getObservationDate(),sheet.getSpecies(),sheet.getNumber(),sheet.getObserver(),sheet.getUploadDate(),sheet.getLocation(),sheet.getUserId(),sheet.getSoundId()));
                     }
                     System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-                    loadingDialogBar.hideDialog();
                 } else {
                     // Handle possible errors, such as a 404 or 500
                     System.err.println("Server error: " + response.message());
                 }
+                loadingDialogBar.hideDialog();
             }
 
             @Override
@@ -700,8 +709,10 @@ public class DbHelper extends SQLiteOpenHelper {
                 // Handle the case where the call failed, e.g., no internet connection
                 t.printStackTrace();
                 System.err.println("Network error: " + t.getMessage());
+                loadingDialogBar.hideDialog();
             }
         });
+
     }
 
     /**

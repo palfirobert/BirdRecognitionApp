@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -80,6 +81,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 import butterknife.BindView;
@@ -603,7 +606,7 @@ public class RecordFragment extends Fragment {
         }
 
         if (userDetails.getUse_location() != null) {
-            mysqlDbHelper.clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
+            clearDirectory(new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/"));
             mysqlDbHelper.fetchAndPopulateUserSounds(user.getId());
             boolean useLocation = userDetails.getUse_location() == 1;
             saveSelectedOption(useLocation);
@@ -729,5 +732,28 @@ public class RecordFragment extends Fragment {
         this.predictionButtonThree.setVisibility(View.INVISIBLE);
         this.predictionTitle.setVisibility(View.INVISIBLE);
     }
+    public void clearDirectory(File dir) {
+        ExecutorService executorService= Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (dir.exists() && dir.isDirectory()) {
+                    File[] files = dir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            deleteRecording("/storage/emulated/0/soundrecordings/" + file.getName());
+                        }
+                    }
+                }
+            }
+        });
+    }
+    public void deleteRecording(String path) {
+            File file = new File(path);
+            if (file.exists()) {
+                file.delete();
+            }
+        }
+
 
 }
