@@ -541,18 +541,18 @@ public class RecordFragment extends Fragment {
 
                         AlertDialog dialog = builder.create();
                         dialog.setOnShowListener(dialogInterface -> {
-                            Button button=dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                            Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                             button.setOnClickListener(view1 -> {
-                                if(!editNumberOfSpecies.getText().toString().equals("")) {
-                                    String initialObservationDate=ObservationSheet.getObservationDate();
+                                if (!editNumberOfSpecies.getText().toString().equals("")) {
+                                    String initialObservationDate = ObservationSheet.getObservationDate();
                                     Date date1 = new Date(Long.parseLong(ObservationSheet.getObservationDate()));
                                     // Create a SimpleDateFormat instance with your desired format
                                     SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
                                     String formattedDate = formatter1.format(date1);
-                                    ObservationSheet observationSheet = new ObservationSheet(formattedDate, editSpecies.getText().toString(),
+                                    ObservationSheetDto observationSheet = new ObservationSheetDto(formattedDate, editSpecies.getText().toString(),
                                             Integer.parseInt(editNumberOfSpecies.getText().toString()), editObserver.getText().toString(), editUploadDate.getText().toString(),
-                                            editLocation.getText().toString(), user.getId(), ObservationSheet.getSoundId(), ObservationSheet.getAudioFileName());
+                                            editLocation.getText().toString(), user.getId(), ObservationSheet.getSoundId());
                                     mysqlDbHelper.addObservation(observationSheet);
                                     try {
                                         SimpleDateFormat date_formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -570,8 +570,7 @@ public class RecordFragment extends Fragment {
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
-                                }else
-                                {
+                                } else {
                                     Toast.makeText(getContext(), "Insert number of species", Toast.LENGTH_SHORT).show();
                                 }
                             });
@@ -732,8 +731,9 @@ public class RecordFragment extends Fragment {
         this.predictionButtonThree.setVisibility(View.INVISIBLE);
         this.predictionTitle.setVisibility(View.INVISIBLE);
     }
+
     public void clearDirectory(File dir) {
-        ExecutorService executorService= Executors.newSingleThreadExecutor();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(new Runnable() {
             @Override
             public void run() {
@@ -748,12 +748,13 @@ public class RecordFragment extends Fragment {
             }
         });
     }
+
     public void deleteRecording(String path) {
-            File file = new File(path);
-            if (file.exists()) {
-                file.delete();
-            }
+        File file = new File(path);
+        if (file.exists()) {
+            file.delete();
         }
+    }
 
 
 }

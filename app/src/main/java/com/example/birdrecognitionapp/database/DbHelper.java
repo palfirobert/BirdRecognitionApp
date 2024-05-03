@@ -182,7 +182,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     // Method to add an observation to the database
-    public boolean addObservation(ObservationSheet observationItem) {
+    public boolean addObservation(ObservationSheetDto observationItem) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         // First, delete existing observation sheets with the same sound_id
@@ -212,6 +212,35 @@ public class DbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_OBSERVATION_SHEET, COLUMN_SOUND_ID + " = ?", new String[]{String.valueOf(id)});
     }
+    /**
+     * Deletes an observation from the observation sheet table based on user ID, location, and upload date.
+     *
+     * @param userId The user ID associated with the observation.
+     * @param location The location of the observation.
+     * @param uploadDate The upload date of the observation.
+     * @return true if the deletion was successful, false otherwise.
+     */
+    public boolean deleteObservationByUserLocationDate(String userId, String location, String uploadDate) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            int deletedRows = db.delete(TABLE_OBSERVATION_SHEET,
+                    COLUMN_USER_ID + " = ? AND " + COLUMN_LOCATION + " = ? AND " + COLUMN_UPLOAD_DATE + " = ?",
+                    new String[]{userId, location, uploadDate});
+            if (deletedRows > 0) {
+                if (onDatabaseChangedListener != null) {
+                    onDatabaseChangedListener.onDatabaseEntryDeleted();
+                }
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            Log.e("DbHelper", "Error while trying to delete observation", e);
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
 
     // Method to fetch all observations from the database
     public ArrayList<ObservationSheetDto> getAllObservations() {
@@ -445,16 +474,15 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public void deleteObservationSheetFromDb(ObservationSheetDto observationSheetDto){
         int timeoutInSeconds = 30;
-        //String sound_id=user.getId()+"-"+fileName.replaceAll("[^\\d]", "");
         System.out.println(observationSheetDto.getSoundId());
-// Set up OkHttpClient with timeout settings
+
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .build();
 
-// Set up Retrofit
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://palfirobert.pythonanywhere.com") // Update this with your actual URL
                 .addConverterFactory(GsonConverterFactory.create())
@@ -533,9 +561,19 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void deleteSoundFromBlob(DeleteSoundDto soundDto) {
+        int timeoutInSeconds = 30;
+
+        // Create an OkHttpClient with the desired timeout
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
+
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://palfirobert.pythonanywhere.com") // Replace with your actual URL
-                .addConverterFactory(GsonConverterFactory.create()) // Assuming you're using Gson
+                .baseUrl("http://palfirobert.pythonanywhere.com")
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
                 .build();
 
         AzureDbAPI apiInterface = retrofit.create(AzureDbAPI.class);
@@ -694,7 +732,8 @@ public class DbHelper extends SQLiteOpenHelper {
                 if (response.isSuccessful()) {
                     observationSheets = response.body();
                     for(ObservationSheetDto sheet:observationSheets){
-                        addObservation(new ObservationSheet(sheet.getObservationDate(),sheet.getSpecies(),sheet.getNumber(),sheet.getObserver(),sheet.getUploadDate(),sheet.getLocation(),sheet.getUserId(),sheet.getSoundId()));
+                        System.out.println(sheet.getUploadDate());
+                        addObservation(new ObservationSheetDto(sheet.getObservationDate(),sheet.getSpecies(),sheet.getNumber(),sheet.getObserver(),sheet.getUploadDate(),sheet.getLocation(),sheet.getUserId(),sheet.getSoundId()));
                     }
                     System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
                 } else {

@@ -121,7 +121,10 @@ public class ObservationSheetAdapter extends RecyclerView.Adapter<ObservationShe
                     switch (menuItem.getItemId()) {
                         case R.id.menu_delete:
                             ObservationSheetDto itemToDelete = observationList.get(getAdapterPosition());
-                            dbHelper.deleteObservation(itemToDelete.getSoundId());
+                            if(itemToDelete.getSoundId()!=null)
+                                dbHelper.deleteObservation(itemToDelete.getSoundId());
+                            else
+                                dbHelper.deleteObservationByUserLocationDate(itemToDelete.getUserId(),itemToDelete.getLocation(),itemToDelete.getUploadDate());
                             dbHelper.deleteObservationSheetFromDb(itemToDelete);
                             observationList.remove(getAdapterPosition());
                             notifyItemRemoved(getAdapterPosition());
