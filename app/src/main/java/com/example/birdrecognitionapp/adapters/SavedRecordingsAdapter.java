@@ -155,6 +155,7 @@ public class SavedRecordingsAdapter extends RecyclerView.Adapter<SavedRecordings
                         case R.id.menu_delete:
                             RecordingItem itemToDelete = list.get(getAdapterPosition());
                             dbHelper.deleteRecording(itemToDelete.getPath());
+                            dbHelper.nullifySoundIdInObservations(user.getId()+"-"+itemToDelete.getName().replaceAll("[^\\d]", ""));
                             dbHelper.deleteSoundFromBlob(new DeleteSoundDto(user.getId(),user.getId()+"/"+itemToDelete.getName(),itemToDelete.getName()));
                             list.remove(getAdapterPosition());
                             notifyItemRemoved(getAdapterPosition());

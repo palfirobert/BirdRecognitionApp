@@ -773,4 +773,30 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * Sets the sound_id to null for all observation sheets with the specified sound_id.
+     *
+     * @param soundId The sound ID of the observation sheets to modify.
+     * @return true if the update was successful, false otherwise.
+     */
+    public boolean nullifySoundIdInObservations(String soundId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.putNull(COLUMN_SOUND_ID);  // Set sound_id to null
+
+        try {
+            int rowsUpdated = db.update(TABLE_OBSERVATION_SHEET, values, COLUMN_SOUND_ID + " = ?", new String[]{soundId});
+            if (rowsUpdated > 0) {
+                return true;  // Return true if one or more rows were updated
+            }
+            return false;  // Return false if no rows were updated
+        } catch (Exception e) {
+            Log.e("DbHelper", "Error while trying to update observation sheets", e);
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
+
 }
