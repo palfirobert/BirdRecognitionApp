@@ -1,6 +1,4 @@
 package com.example.birdrecognitionapp.utils;
-import org.brotli.dec.BrotliInputStream;
-import org.brotli.enc.BrotliOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
@@ -20,11 +18,4 @@ public class CompressionUtils {
         }
     }
 
-    public static byte[] compressWithBrotli(byte[] data) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        BrotliOutputStream brotliOut = new BrotliOutputStream(out);
-        brotliOut.write(data);
-        brotliOut.close();
-        return out.toByteArray();
-    }
 }
