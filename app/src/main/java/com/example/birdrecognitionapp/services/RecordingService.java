@@ -27,6 +27,7 @@ import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
+import com.example.birdrecognitionapp.utils.CompressionUtils;
 
 
 import java.io.File;
@@ -301,15 +302,14 @@ public class RecordingService extends Service {
                 .build();
 
         if (!useLocation) {// Create a Retrofit instance with the custom OkHttpClient
-
             HashMap<String, Object> parameters = new HashMap<>();
-            parameters.put("sound_data", soundInBase64);
+            parameters.put("sound_data", CompressionUtils.compressString(soundInBase64));
             parameters.put("user_id", user.getId());
             parameters.put("audio_name", this.fileName);
             parameters.put("is_new_recording",newRecording);
 
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://palfirobert.pythonanywhere.com") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
+                    .baseUrl("http://10.0.2.2:8000/") // sau http://10.0.2.2:8000/  sau palfirobert.pythonanywhere.com
                     .addConverterFactory(GsonConverterFactory.create())
                     .client(okHttpClient)  // Set the custom OkHttpClient
                     .build();
@@ -356,7 +356,7 @@ public class RecordingService extends Service {
                 HashMap<String, Object> parameters = new HashMap<>();
                 parameters.put("user_id", user.getId());
                 parameters.put("audio_name", this.fileName);
-                parameters.put("sound_data", soundInBase64);
+                parameters.put("sound_data", CompressionUtils.compressString(soundInBase64));
                 parameters.put("lon", lon);
                 parameters.put("lat", lat);
                 parameters.put("is_new_recording",newRecording);
