@@ -39,6 +39,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -46,7 +47,9 @@ import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -138,8 +141,10 @@ public class LoginActivity extends AppCompatActivity {
                                             UserDetails userDetails = new UserDetails(
                                                     loginResponse.getUser_id(),
                                                     loginResponse.getLanguage(),
-                                                    loginResponse.getUse_location()
+                                                    loginResponse.getUse_location(),
+                                                    loginResponse.getToken()
                                             );
+                                            System.out.println(UserDetails.getToken());
                                             user = new User(loginResponse.getUser_id(), loginResponse.getName(), loginResponse.getSurname(), loginResponse.getEmail(), loginResponse.getPassword());
 
                                             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -148,6 +153,7 @@ public class LoginActivity extends AppCompatActivity {
                                             sessionManager.setLogin(true);
                                             sessionManager.setUseLocation(userDetails.getUse_location());
                                             sessionManager.setLanguage(userDetails.getLanguage());
+                                            sessionManager.setToken(UserDetails.getToken());
                                             sessionManager.setUserId(userDetails.getUser_id());
                                             sessionManager.setSurname(user.getSurname());
                                             sessionManager.setEmail(user.getEmail());

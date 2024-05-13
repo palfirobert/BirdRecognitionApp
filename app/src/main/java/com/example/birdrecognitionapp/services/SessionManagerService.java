@@ -13,6 +13,7 @@ public class SessionManagerService {
     private static final String SURNAME = "UserSurname";
     private static final String EMAIL = "UserEmail";
     private static final String PASSWORD = "UserPassword";
+    private static final String TOKEN="Token";
     SharedPreferences prefs;
     SharedPreferences.Editor editor;
     Context context;
@@ -48,6 +49,15 @@ public class SessionManagerService {
 
     public String getLanguage() {
         return prefs.getString(LANGUAGE, "English");
+    }
+
+    public void setToken(String token) {
+        editor.putString(TOKEN, token);
+        editor.commit();
+    }
+
+    public String getToken() {
+        return prefs.getString(TOKEN, null);
     }
 
     public void setUseLocation(Integer useLocation) {

@@ -612,7 +612,7 @@ public class RecordFragment extends Fragment {
             saveSelectedLanguage(userDetails.getLanguage());
         } else {
             SessionManagerService sessionManager = new SessionManagerService(getContext());
-            userDetails = new UserDetails(sessionManager.getUserId(), sessionManager.getLanguage(), sessionManager.getUseLocation());
+            userDetails = new UserDetails(sessionManager.getUserId(), sessionManager.getLanguage(), sessionManager.getUseLocation(),sessionManager.getToken());
             boolean useLocation = userDetails.getUse_location() == 1;
             DbHelper.firstLogin = false;
             saveSelectedOption(useLocation);

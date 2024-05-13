@@ -10,7 +10,7 @@ public class LoginResponse {
     private String email;
     private String name;
     private String password;
-
+    private String token;
     public LoginResponse(){}
 
     public LoginResponse(String message, String error, String user_id, String language, Integer use_location, String surname, String email, String name, String password) {
@@ -23,6 +23,14 @@ public class LoginResponse {
         this.email = email;
         this.name = name;
         this.password = password;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public String getSurname() {

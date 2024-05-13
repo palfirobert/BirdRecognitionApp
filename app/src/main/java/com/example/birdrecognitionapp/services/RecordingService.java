@@ -27,6 +27,7 @@ import com.example.birdrecognitionapp.dto.SoundPredictionResponse;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
+import com.example.birdrecognitionapp.models.UserDetails;
 import com.example.birdrecognitionapp.utils.CompressionUtils;
 
 
@@ -48,7 +49,9 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -294,8 +297,17 @@ public class RecordingService extends Service {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
-        // Create an OkHttpClient with the desired timeout
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
@@ -318,7 +330,7 @@ public class RecordingService extends Service {
             RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
             // Create a Call object for the API request
-            Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithoutLocation(parameters);
+            Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithoutLocation("Token " + UserDetails.getToken(), parameters);
 
             // Enqueue the API call
             call.enqueue(new Callback<List<SoundPredictionResponse>>() {
@@ -371,7 +383,7 @@ public class RecordingService extends Service {
                 RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
                 // Create a Call object for the API request
-                Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithLocation(parameters);
+                Call<List<SoundPredictionResponse>> call = retrofitAPI.sendDataForPredictionWithLocation("Token " + UserDetails.getToken(),parameters);
 
                 // Enqueue the API call
                 call.enqueue(new Callback<List<SoundPredictionResponse>>() {

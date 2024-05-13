@@ -22,6 +22,7 @@ import com.example.birdrecognitionapp.models.LoadingDialogBar;
 import com.example.birdrecognitionapp.models.ObservationSheet;
 import com.example.birdrecognitionapp.models.RecordingItem;
 import com.example.birdrecognitionapp.models.User;
+import com.example.birdrecognitionapp.models.UserDetails;
 import com.example.birdrecognitionapp.utils.DateUtils;
 
 import java.io.BufferedOutputStream;
@@ -41,7 +42,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -365,18 +368,37 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void addSoundToDb(RecordingItem recordingItem) {
+        // Set your desired timeout in seconds
+        int timeoutInSeconds = 30;
+
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
+                .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                .build();
 
         // Build the Retrofit instance
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
                 .build();
 
         // Create an instance of the RetrofitAPI interface
         AzureDbAPI retrofitAPI = retrofit.create(AzureDbAPI.class);
 
         // Create a Call object for the API request
-        Call<String> call = retrofitAPI.addSound(recordingItem);
+        Call<String> call = retrofitAPI.addSound("Token " + UserDetails.getToken(),recordingItem);
 
         // Enqueue the call
         call.enqueue(new Callback<String>() {
@@ -414,8 +436,17 @@ public class DbHelper extends SQLiteOpenHelper {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
-        // Create an OkHttpClient with the desired timeout
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
@@ -427,7 +458,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 .client(okHttpClient)
                 .build();
         AzureDbAPI service = retrofit.create(AzureDbAPI.class);
-        Call<ResponseBody> call = service.downloadUserSounds(userSoundsDto);
+        Call<ResponseBody> call = service.downloadUserSounds("Token " + UserDetails.getToken(),userSoundsDto);
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -473,15 +504,24 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void deleteObservationSheetFromDb(ObservationSheetDto observationSheetDto){
+        // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
-        System.out.println(observationSheetDto.getSoundId());
 
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .build();
-
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://palfirobert.pythonanywhere.com") // Update this with your actual URL
@@ -491,7 +531,7 @@ public class DbHelper extends SQLiteOpenHelper {
         AzureDbAPI service = retrofit.create(AzureDbAPI.class);
 
 
-        Call<Void> call = service.deleteObservationSheet(observationSheetDto);
+        Call<Void> call = service.deleteObservationSheet("Token " + UserDetails.getToken(),observationSheetDto);
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
@@ -561,10 +601,20 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void deleteSoundFromBlob(DeleteSoundDto soundDto) {
+        // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
-        // Create an OkHttpClient with the desired timeout
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
@@ -578,7 +628,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         AzureDbAPI apiInterface = retrofit.create(AzureDbAPI.class);
 
-        Call<String> call = apiInterface.deleteSound(soundDto);
+        Call<String> call = apiInterface.deleteSound("Token " + UserDetails.getToken(),soundDto);
         call.enqueue(new Callback<String>() {
             @Override
             public void onResponse(Call<String> call, Response<String> response) {
@@ -605,8 +655,17 @@ public class DbHelper extends SQLiteOpenHelper {
         // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
 
-        // Create an OkHttpClient with the desired timeout
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
@@ -620,7 +679,7 @@ public class DbHelper extends SQLiteOpenHelper {
         AzureDbAPI service = retrofit.create(AzureDbAPI.class);
 
         // Assuming you have a GetUserSoundsDto instance named userSoundsDto
-        Call<Map<String, Long>> call = service.getCreationDateOfSounds(user.getId());
+        Call<Map<String, Long>> call = service.getCreationDateOfSounds("Token " + UserDetails.getToken(),user.getId());
 
         call.enqueue(new Callback<Map<String, Long>>() {
             @Override
@@ -671,8 +730,20 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void insertObservationSheet(ObservationSheetDto observationSheetDto){
+        // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
+
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
@@ -685,7 +756,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 .build();
 
         AzureDbAPI service = retrofit.create(AzureDbAPI.class);
-        Call<ResponseBody> call = service.insertObservation(observationSheetDto);
+        Call<ResponseBody> call = service.insertObservation("Token " + UserDetails.getToken(),observationSheetDto);
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -711,8 +782,20 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public void getObservationsOfUser(String userId)
     {   deleteAllObservations();
+        // Set your desired timeout in seconds
         int timeoutInSeconds = 30;
+
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Authorization", "Token " + UserDetails.getToken())
+                                .build();
+                        return chain.proceed(newRequest);
+                    }
+                })
                 .connectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .readTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                 .writeTimeout(timeoutInSeconds, TimeUnit.SECONDS)
@@ -725,7 +808,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 .build();
 
         AzureDbAPI service = retrofit.create(AzureDbAPI.class);
-        Call<List<ObservationSheetDto>> call = service.getObservationsByUserId(userId);
+        Call<List<ObservationSheetDto>> call = service.getObservationsByUserId("Token " + UserDetails.getToken(),userId);
         call.enqueue(new Callback<List<ObservationSheetDto>>() {
             @Override
             public void onResponse(Call<List<ObservationSheetDto>> call, Response<List<ObservationSheetDto>> response) {
