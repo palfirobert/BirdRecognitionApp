@@ -62,8 +62,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RecordingService extends Service {
-    // todo: este facut pana acuma enbdpointul care ia soundsurile dupa un user, trebuie luate datele din db din sounds si populata baza de date din dbhelper, la fiecare sync de sunete trebuie sterse toate sunetele din internal storage si bagate cele downloadate.
-
     long startingTimeMillis = 0;
     long elapsedTimeMillis = 0;
     private static final int MAX_RETRIES = 3; // Max number of retries
@@ -76,8 +74,8 @@ public class RecordingService extends Service {
     private boolean isRecording = false;
     String filePath;
     String fileName;
-    private static final int SAMPLE_RATE = 44100; // Standard CD quality.
-    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO; // Change to CHANNEL_IN_MONO if desired.
+    private static final int SAMPLE_RATE = 44100;
+    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     private int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
     private boolean useLocation;
@@ -124,9 +122,7 @@ public class RecordingService extends Service {
             recordingThread.start();
             startingTimeMillis = System.currentTimeMillis();
         } else {
-            // Handle the case where permission is not granted
             Toast.makeText(this, "Recording permission not granted", Toast.LENGTH_SHORT).show();
-            // Depending on your design, you may want to stop the service or ask for permission here if possible
         }
     }
 
@@ -138,7 +134,7 @@ public class RecordingService extends Service {
         long totalAudioLen;
         long totalDataLen;
         long longSampleRate = SAMPLE_RATE;
-        int channels = 2; // For CHANNEL_IN_STEREO
+        int channels = 2;
         long byteRate = 16 * SAMPLE_RATE * channels / 8;
 
         byte data[] = new byte[bufferSize];
@@ -235,12 +231,11 @@ public class RecordingService extends Service {
         if (isRecording) {
             stopRecording();
         }
-        System.out.println("S-A DAT DESTROY");
+
         String mp3FilePath = Environment.getExternalStorageDirectory().getPath() + "/soundrecordings" + "/audio" + ts + ".wav";
         Path path = Paths.get(mp3FilePath);
         try {
             byte[] fileContent = Files.readAllBytes(path);
-            System.out.println(Base64.getEncoder().encodeToString(fileContent));
 
             // flag the recording activity that the recording stopped and to show la loading dialog
             Intent intent = new Intent("RECORDING_STOPPED");

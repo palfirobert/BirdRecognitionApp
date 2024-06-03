@@ -144,12 +144,10 @@ public class LoginActivity extends AppCompatActivity {
                                                     loginResponse.getUse_location(),
                                                     loginResponse.getToken()
                                             );
-                                            System.out.println(UserDetails.getToken());
-                                            user = new User(loginResponse.getUser_id(), loginResponse.getName(), loginResponse.getSurname(), loginResponse.getEmail(), loginResponse.getPassword());
+                                            user = new User(loginResponse.getUser_id(), loginResponse.getName(),
+                                                    loginResponse.getSurname(), loginResponse.getEmail(), loginResponse.getPassword());
 
                                             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                                            System.out.println(userDetails.getUse_location());
-                                            System.out.println(userDetails.getLanguage());
                                             sessionManager.setLogin(true);
                                             sessionManager.setUseLocation(userDetails.getUse_location());
                                             sessionManager.setLanguage(userDetails.getLanguage());
@@ -226,7 +224,7 @@ public class LoginActivity extends AppCompatActivity {
         );
 
         // Set up the buttons
-        builder.setPositiveButton("Send", null);  // Listener is null initially to avoid automatic dismissal
+        builder.setPositiveButton("Send", null);
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         AlertDialog dialog = builder.create();
@@ -236,8 +234,8 @@ public class LoginActivity extends AppCompatActivity {
                 email = input.getText().toString();
                 Matcher matcher = EMAIL_PATTERN.matcher(email);
                 if (matcher.matches()) {
-                    dialog.dismiss();  // Only dismiss the dialog if the email is valid
-                    sendResetCode(email);  // Implement this to send the reset code
+                    dialog.dismiss();
+                    sendResetCode(email);
                 } else {
                     Toast.makeText(LoginActivity.this, "Please enter a valid email address.", Toast.LENGTH_LONG).show();
                 }
@@ -262,7 +260,7 @@ public class LoginActivity extends AppCompatActivity {
         input.setHint("Enter the 4-digit code");
         builder.setView(input);
 
-        builder.setPositiveButton("Verify", null); // Initially set to null to prevent automatic dismissal
+        builder.setPositiveButton("Verify", null);
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         AlertDialog dialog = builder.create();
@@ -449,7 +447,6 @@ public class LoginActivity extends AppCompatActivity {
 
 
     public boolean CheckPermissions() {
-        // this method is used to check permission
         int resultStorage = ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
         int resultRecord = ContextCompat.checkSelfPermission(getApplicationContext(), RECORD_AUDIO);
         int resultLocationFine = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION);
@@ -460,8 +457,8 @@ public class LoginActivity extends AppCompatActivity {
 
 
     private void RequestPermissions() {
-        // this method is used to request the
-        // permission for audio recording and storage.
-        ActivityCompat.requestPermissions(LoginActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_AUDIO_PERMISSION_CODE);
+        ActivityCompat.requestPermissions(LoginActivity.this, new String[]{RECORD_AUDIO
+                , WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE,
+                android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_AUDIO_PERMISSION_CODE);
     }
 }

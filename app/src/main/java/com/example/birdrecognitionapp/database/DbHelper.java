@@ -184,7 +184,7 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
-    // Method to add an observation to the database
+
     public boolean addObservation(ObservationSheetDto observationItem) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -311,7 +311,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
                 for (File file : files) {
                     String absolutePath = filePath + file.getName();
-                    // Check if this file's path is not in the list of all recordings' paths
                     boolean existsInDatabase = false;
                     for (RecordingItem item : allRecordings) {
                         if (item.getPath().equals(absolutePath)) {
@@ -321,7 +320,6 @@ public class DbHelper extends SQLiteOpenHelper {
                     }
 
                     if (!existsInDatabase && !file.getName().startsWith(".")) {
-                        // This file is not in the database, so add it
                         addRecordingForNewFile(file);
                     }
                 }
@@ -486,7 +484,6 @@ public class DbHelper extends SQLiteOpenHelper {
                     }
                 } else {
                     Log.e("DownloadError", "Server contacted but unable to retrieve content");
-                    System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxx");
                     System.out.println((new File(Environment.getExternalStorageDirectory().getPath() + "/soundrecordings/").getPath()));
                     getObservationsOfUser(user.getId());
                     Toast.makeText(context, "You don't have any sounds..", Toast.LENGTH_SHORT).show();

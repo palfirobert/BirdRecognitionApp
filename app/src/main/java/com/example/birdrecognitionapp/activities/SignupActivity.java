@@ -14,10 +14,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -79,10 +82,17 @@ public class SignupActivity extends AppCompatActivity {
                 } else if (!matcher.matches()) {
                     Toast.makeText(SignupActivity.this, "Invalid email format", Toast.LENGTH_SHORT).show();
                 } else {
-                    // Initialize Retrofit for the signup request
+                    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                            .connectTimeout(30, TimeUnit.SECONDS) // Set the connection timeout
+                            .readTimeout(30, TimeUnit.SECONDS) // Set the read timeout
+                            .writeTimeout(30, TimeUnit.SECONDS) // Set the write timeout
+                            .build();
+
+                    // Use the custom OkHttpClient in your Retrofit builder
                     Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl("http://palfirobert.pythonanywhere.com") // Adjust the base URL as necessary
+                            .baseUrl("http://palfirobert.pythonanywhere.com") // Your base URL
                             .addConverterFactory(GsonConverterFactory.create())
+                            .client(okHttpClient) // Set the custom client here
                             .build();
 
                     // Prepare the signup request
@@ -108,7 +118,8 @@ public class SignupActivity extends AppCompatActivity {
                                     }
                                 }
                             } else {
-                                Toast.makeText(SignupActivity.this, "Signup failed. Try again.", Toast.LENGTH_SHORT).show();
+                                System.out.println(response);
+                                Toast.makeText(SignupActivity.this, "Account with this email already in use. Try again.", Toast.LENGTH_SHORT).show();
                             }
                             loadingDialogBar.hideDialog();
                         }

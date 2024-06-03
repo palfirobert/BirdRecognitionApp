@@ -172,7 +172,7 @@ public class RecordFragment extends Fragment {
     private void updateUI(List<SoundPredictionResponse> predictionList, LANGUAGE language) {
         if (isAdded() && getActivity() != null && !getActivity().isFinishing()) {
             loadingDialogBar.hideDialog();
-            // Create a Map with common_name as key and CoiSoundPredictionResponse as value
+
             Map<String, SoundPredictionResponse> map = new HashMap<>();
             for (SoundPredictionResponse response : predictionList) {
                 map.put(response.getCommon_name(), response);
