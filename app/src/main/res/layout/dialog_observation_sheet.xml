@@ -9,47 +9,139 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <EditText
-            android:id="@+id/editObservationDate"
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Observation Sheet"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Observation Date -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false"
-            android:hint="Observation Date (YYYY-MM-DD)" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
-        <EditText
-            android:id="@+id/editSpecies"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Observation Date:" />
+
+            <EditText
+                android:id="@+id/editObservationDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:enabled="false"
+                android:hint="YYYY-MM-DD" />
+        </LinearLayout>
+
+        <!-- Species -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false"
-            android:hint="Species"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
-        <EditText
-            android:id="@+id/editNumber"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Species:" />
+
+            <EditText
+                android:id="@+id/editSpecies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:enabled="false"
+                android:hint="Species"/>
+        </LinearLayout>
+
+        <!-- Number -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Number"
-            android:inputType="number"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
-        <EditText
-            android:id="@+id/editObserver"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Number:" />
+
+            <EditText
+                android:id="@+id/editNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:hint="Number"
+                android:inputType="number"/>
+        </LinearLayout>
+
+        <!-- Observer -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false"
-            android:hint="Observer"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
-        <EditText
-            android:id="@+id/editUploadDate"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Observer:" />
+
+            <EditText
+                android:id="@+id/editObserver"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:enabled="false"
+                android:hint="Observer"/>
+        </LinearLayout>
+
+        <!-- Upload Date -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false"
-            android:hint="Upload Date (YYYY-MM-DD)"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
-        <EditText
-            android:id="@+id/editLocation"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Upload Date:" />
+
+            <EditText
+                android:id="@+id/editUploadDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:enabled="false"
+                android:hint="YYYY-MM-DD"/>
+        </LinearLayout>
+
+        <!-- Location -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false"
-            android:hint="Location"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Location:" />
+
+            <EditText
+                android:id="@+id/editLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:enabled="false"
+                android:hint="Location"/>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
